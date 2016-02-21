@@ -91,10 +91,10 @@ void MacGrid::pressureSolve(double dt)
     int n_elements = _SIZE_X * _SIZE_Y;
     // Sparse matrix containing connectivity information
     // for the laplace operator
-    arma::mat A(n_elements, n_elements);
-    A.zeros();
-    // Vector containing divergences in each cell
-    arma::vec b(n_elements);
+    Eigen::SparseMatrix<double> A(n_elements, n_elements);
+
+    // Vector containing negative divergences in each cell
+	Eigen::VectorXd b(n_elements);    
 
 	for (int j = 0; j < _SIZE_Y; ++j)
 	{
@@ -109,45 +109,37 @@ void MacGrid::pressureSolve(double dt)
 			// Set values in A. Check in all dimensions
 			int n_non_solid_neighbors = 0;
 			if (!isSolid(i - 1, j)) {
-				A(idx_i_minus1, idx) = 1;
+				A.insert(idx_i_minus1, idx) = 1;
 				n_non_solid_neighbors++;
 			}	
 			if (!isSolid(i + 1, j)) {
-				A(idx_i_plus1, idx) = 1;
+				A.insert(idx_i_plus1, idx) = 1;
 				n_non_solid_neighbors++;
 			}
 			if (!isSolid(i, j - 1)) {
-				A(idx_j_minus1, idx) = 1;
+				A.insert(idx_j_minus1, idx) = 1;
 				n_non_solid_neighbors++;
 			}
 			if (!isSolid(i, j + 1)) {
-				A(idx_j_plus1, idx) = 1;
+				A.insert(idx_j_plus1, idx) = 1;
 				n_non_solid_neighbors++;
 			}
 
 			// Set diagonal value
-			A(idx, idx) = - n_non_solid_neighbors;
+			A.insert(idx, idx) = - n_non_solid_neighbors;
 
 			// Calculate divergence and store in b
-			b(idx) = - (divVelX(i, j) + divVelY(i, j));
+			b[idx] = - (divVelX(i, j) + divVelY(i, j));
 		}
 	}
+	// Solver of linear system
+	Eigen::ConjugateGradient<Eigen::SparseMatrix<double> > solver;
+	solver.setMaxIterations(3);
 
-	// Solve equation system
-	arma::vec x(n_elements); // Pressure to be stored in this vector
-
-	//arma::superlu_opts settings;
-	//settings.permutation = arma::superlu_opts::NATURAL;
-	//settings.refine      = arma::superlu_opts::REF_NONE;
-	//settings.symmetric   = true;
-	//arma::spsolve(x, A, b, "superlu", settings);
-	//arma::spsolve(x, A, b);
-	//arma::spsolve(x, A, b, "lapack");
-	arma::solve(x, A, b);
-
-	//std::cout << "A : " << std::endl << std::cout << A << std::endl;
-	//std::cout << "b : " << std::endl << std::cout << b << std::endl;
-	//std::cout << "x : " << std::endl << std::cout << x << std::endl;
+	// Vector containing pressures for each cell
+	Eigen::VectorXd x(n_elements);
+	solver.compute(A);
+	x = solver.solve(b);
 
 	double density = 1;
 	// X vel

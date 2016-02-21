@@ -10,11 +10,16 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/modules)
 
 # Find external packages
 
+#add_subdirectory(${PROJECT_SOURCE_DIR}/ext/eigen-eigen-07105f7124f9)
 #add_subdirectory(${PROJECT_SOURCE_DIR}/ext/armadillo-6.500.5)
-find_package(ARMADILLO REQUIRED)
+#find_package(EIGEN REQUIRED)
+
+set(EIGEN3_INCLUDE_DIR "default value" CACHE PATH "description")
+
+include_directories ( "${EIGEN3_INCLUDE_DIR}" )
 
 # Add include directories
-include_directories(${ARMADILLO_INCLUDE_DIRS})
+include_directories(${EIGEN3_INCLUDE_DIR})
 
 # Our own include directory
 set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR}/include)
@@ -40,8 +45,7 @@ add_library(${PROJECT_NAME}_lib
 add_executable(${PROJECT_NAME} src/main.cpp)
 target_link_libraries(${PROJECT_NAME}
 	${PROJECT_NAME}_lib
-	${ARMADILLO_LIBRARIES})
-
+	)
 # C++11 compatability
 set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS "-std=c++11")
 

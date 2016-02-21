@@ -7,7 +7,8 @@
 
 #include <assert.h>
 
-#include <armadillo>
+#include <Eigen/SparseCore>
+#include <Eigen/IterativeLinearSolvers>
 
 //! Let this have dense arrays for now
 class MacGrid

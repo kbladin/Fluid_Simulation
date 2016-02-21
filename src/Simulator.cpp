@@ -1,6 +1,6 @@
 #include <Simulator.h>
 
-static const int SIZE = 20;
+static const int SIZE = 40;
 
 Simulator::Simulator()
 {

@@ -5,7 +5,7 @@
 Renderer::Renderer(MacGrid* grid)
 {
 	_grid = grid;
-	_canvas = new Canvas(200, 200);
+	_canvas = new Canvas(400, 400);
 }
 
 Renderer::~Renderer()
