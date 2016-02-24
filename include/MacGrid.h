@@ -10,6 +10,11 @@
 #include <Eigen/SparseCore>
 #include <Eigen/IterativeLinearSolvers>
 
+enum CellType
+{
+	LIQUID, AIR, SOLID
+};
+
 //! Let this have dense arrays for now
 class MacGrid
 {
@@ -19,40 +24,45 @@ public:
 
 	// Simple semi Lagrangian advection with Euler integration
 	void advect(double dt);
-	void addExternalForce(double dt);
+	void addExternalForce(double dt, double F_x, double F_y);
 	void pressureSolve(double dt);
+	void enforceDirichlet();
+
+	void clearCellTypeBuffer();
 
 	// Getters
-	double velX(int x, int y);
-	double velY(int x, int y);
-	double velXHalfIndexed(int x, int y);
-	double velYHalfIndexed(int x, int y);
-	double color(int x, int y);
-	double velXInterpolated(double x, double y);
-	double velYInterpolated(double x, double y);
-	double colorInterpolated(double x, double y);
-	double divVelX(int x, int y);
-	double divVelY(int x, int y);
-	int sizeX();
-	int sizeY();
-	double lengthX();
-	double lengthY();
-	double deltaX();
-	double deltaY();
-
-	bool isSolid(int i, int j);
-
+	double velX(int x, int y) const;
+	double velY(int x, int y) const;
+	double velXHalfIndexed(int x, int y) const;
+	double velYHalfIndexed(int x, int y) const;
+	double color(int x, int y) const;
+	double velXInterpolated(double x, double y) const;
+	double velYInterpolated(double x, double y) const;
+	double colorInterpolated(double x, double y) const;
+	double divVelX(int x, int y) const;
+	double divVelY(int x, int y) const;
+	int sizeX() const;
+	int sizeY() const;
+	double lengthX() const;
+	double lengthY() const;
+	double deltaX() const;
+	double deltaY() const;
+	CellType cellType(int i, int j) const;
+	CellType cellTypeXHalfIndexed(int x, int y) const;
+	CellType cellTypeYHalfIndexed(int x, int y) const;
+	
 	// Setters
 	void setVelX(int x, int y, double vel_x);
 	void setVelY(int x, int y, double vel_y);
 	void setColor(int x, int y, double color);
+	void setCellType(int x, int y, CellType cell_type);
 	void addToVelXInterpolated(double x, double y, double vel_x);
 	void addToVelYInterpolated(double x, double y, double vel_y);
 	void addToColorInterpolated(double x, double y, double color);
 
+private:
 	void _swapBuffers();
 
-private:
 	void _advectVelX(double dt);
 	void _advectVelY(double dt);
 	void _advectColor(double dt);
@@ -71,10 +81,14 @@ private:
 	double* _vel_x_front_buffer;
 	double* _vel_y_front_buffer;
 	double* _color_front_buffer;
+	CellType* _cell_type_buffer;
 
 	double* _vel_x_back_buffer;
 	double* _vel_y_back_buffer;
 	double* _color_back_buffer;
+
+	// Sparse matrix for CG solve
+    Eigen::SparseMatrix<double> A;
 };
 
 #endif

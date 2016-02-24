@@ -19,6 +19,8 @@ public:
 	Canvas(int width, int height);
 	~Canvas();
 	void drawLine(int from_x, int from_y, int to_x, int to_y);
+	void drawPoint(int pos_x, int pos_y, int size);
+	void fillRectangle(int min_x, int min_y, int max_x, int max_y);
 	void setPixel(int i, int j, Color c);
 	void fill(Color c);
 

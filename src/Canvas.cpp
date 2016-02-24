@@ -60,8 +60,46 @@ void Canvas::drawLine(int from_x, int from_y, int to_x, int to_y)
 		{
 			continue;
 		}
-		else{
+		else
+		{
 			_pixel_data[x_idx + y_idx * _WIDTH] = _line_color;
+		}
+	}
+}
+
+void Canvas::drawPoint(int pos_x, int pos_y, int size)
+{
+	int min_x = pos_x - size / 2;
+	int min_y = pos_y - size / 2;
+	int max_x = pos_x + size / 2;
+	int max_y = pos_y + size / 2;
+	
+	fillRectangle(min_x, min_y, max_x, max_y);
+}
+
+void Canvas::fillRectangle(int min_x, int min_y, int max_x, int max_y)
+{
+	for (int j = min_y; j <= max_y; ++j)
+	{
+		for (int i = min_x; i <= max_x; ++i)
+		{
+			if (i < 0 || i >= _WIDTH ||
+				j < 0 || j >= _HEIGHT)
+			{
+				continue;
+			}
+			else
+			{
+				if (i == min_x || i == max_x ||
+					j == min_y || j == max_y)
+				{ // On border, use line color
+					_pixel_data[i + j * _WIDTH] = _line_color;
+				}
+				else 
+				{ // Inside, use fill color
+					_pixel_data[i + j * _WIDTH] = _fill_color;
+				}
+			}
 		}
 	}
 }

@@ -5,20 +5,29 @@
 
 #include <MacGrid.h>
 #include <Canvas.h>
+#include <MarkerParticleSet.h>
 
 class Renderer
 {
 public:
-	Renderer(MacGrid* grid);
+	Renderer(double x_min, double y_min, double x_max, double y_max);
 	~Renderer();
 
-	void renderCanvas();
+	void clearCanvas();
+	void renderGridVelocitiesToCanvas(const MacGrid* grid);
+	void renderGridCellsToCanvas(const MacGrid* grid);
+	void renderColorToCanvas(const MacGrid* grid);
+	void renderParticlesToCanvas(const MarkerParticleSet* particle_set);
 
-	void writeToPpm( const char* file_path, float min_val, float max_val);
 	void writeCanvasToPpm( const char* file_path);
 private:
-	MacGrid* _grid;
 	Canvas* _canvas;
+
+	// World coordinates, defines a quad to render
+	double _x_min;
+	double _y_min;
+	double _x_max;
+	double _y_max;
 };
 
 #endif
