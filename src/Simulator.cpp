@@ -22,15 +22,15 @@ Simulator::Simulator()
 	}
 
 	// Add a bunch of trace particles at random positions
-	//for (int i = 0; i < 500; ++i)
-	//{
-	//	_particle_set->addParticle(
-	//		rand() / double(INT_MAX) * WORLD_SIZE,
-	//		rand() / double(INT_MAX) * WORLD_SIZE);
-	//}
+	for (int i = 0; i < 500; ++i)
+	{
+		_particle_set->addParticle(
+			rand() / double(INT_MAX) * WORLD_SIZE,
+			rand() / double(INT_MAX) * WORLD_SIZE);
+	}
 
 	// Setup
-	int n_frames = 3;
+	int n_frames = 100;
 	double seconds_per_frame = 1;
 	
 	// Start simulation
@@ -43,9 +43,10 @@ Simulator::Simulator()
 		for (double frame_time = 0; frame_time < seconds_per_frame; frame_time += dt)
 		{
 			// Calculate dt (for now just set it)
-			dt = 0.01;
+			dt = 0.005;
 			// Update the fluid grid
 			//updateCellTypesWithParticles();
+			if (i < 10)
 			_grid->addExternalForce(dt, 0, 10);
 			_grid->advect(dt);
 			_grid->enforceDirichlet();

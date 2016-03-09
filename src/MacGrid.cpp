@@ -49,11 +49,11 @@ MacGrid::MacGrid(
 	{
 		for (int i = 0; i < _SIZE_X; ++i)
 		{
-			int idx = i + j * _SIZE_X;
-			int idx_i_minus1 = (i - 1) + j * _SIZE_X;
-			int idx_i_plus1 = (i + 1) + j * _SIZE_X;
-			int idx_j_minus1 = i + (j - 1) * _SIZE_X;
-			int idx_j_plus1 = i + (j + 1) * _SIZE_X;
+			int idx = 			twoDToLinearCellCenter(i,j);
+			int idx_i_minus1 = 	twoDToLinearCellCenter(i - 1,j);
+			int idx_i_plus1 = 	twoDToLinearCellCenter(i + 1,j);
+			int idx_j_minus1 = 	twoDToLinearCellCenter(i,j - 1);
+			int idx_j_plus1 = 	twoDToLinearCellCenter(i,j + 1);
 
 			// Set values in A. Check in all dimensions
 			int n_non_solid_neighbors = 0;
@@ -82,7 +82,7 @@ MacGrid::MacGrid(
 
 MacGrid::~MacGrid()
 {
-	
+
 }
 
 void MacGrid::advect(double dt)
@@ -102,17 +102,17 @@ void MacGrid::advect(double dt)
 
 void MacGrid::addExternalForce(double dt, double F_x, double F_y)
 {
-	for (int j = _SIZE_Y * 1 / 7; j < _SIZE_Y * 2 / 7; ++j)
+	for (int j = _SIZE_Y * 3 / 7; j < _SIZE_Y * 4 / 7; ++j)
 	{
-		for (int i = _SIZE_X * 1 / 7; i < _SIZE_X * 2 / 7; ++i)
+		for (int i = _SIZE_X * 3 / 7; i < _SIZE_X * 4 / 7; ++i)
 		{
 			if (cellTypeXHalfIndexed(i, j) == LIQUID)
 			{ // Only add force to the liquid cells
 				// Euler integration (here write directly to front buffer for now)
-				_vel_x_front_buffer[i + j * (_SIZE_X + 1)] = 
-					_vel_x_front_buffer[i + j * (_SIZE_X + 1)] + F_x * dt;
-				_vel_y_front_buffer[i + j * _SIZE_X] = 
-					_vel_y_front_buffer[i + j * _SIZE_X] + F_y * dt;
+				_vel_x_front_buffer[twoDToLinearXBorders(i,j)] = 
+					_vel_x_front_buffer[twoDToLinearXBorders(i,j)] + F_x * dt;
+				_vel_y_front_buffer[twoDToLinearYBorders(i,j)] = 
+					_vel_y_front_buffer[twoDToLinearYBorders(i,j)] + F_y * dt;
 			}
 		}
 	}
@@ -148,7 +148,7 @@ void MacGrid::pressureSolve(double dt)
 	{
 		for (int i = 0; i < _SIZE_X; ++i)
 		{
-			int idx = i + j * _SIZE_X;
+			int idx = twoDToLinearCellCenter(i,j);
 
 			// Calculate divergence and store in b
 			b[idx] = - (divVelX(i, j) + divVelY(i, j));
@@ -170,12 +170,17 @@ void MacGrid::pressureSolve(double dt)
 	{
 		for (int i = 1; i < _SIZE_X; ++i)
 		{
-			double vel_x = _vel_x_front_buffer[i + j * (_SIZE_X + 1)];
-			double pressure_diff =
-				x(i + j * _SIZE_X)
-				- x(i - 1 + j * _SIZE_X);
+			// Calculate indices
+			int idx_vel_x = 			twoDToLinearXBorders(i, j);
+			int idx_center = 			twoDToLinearCellCenter(i, j);
+			int idx_center_i_minus1 = 	twoDToLinearCellCenter(i - 1, j);
+			// Get the current velocity and pressure difference
+			double vel_x = _vel_x_front_buffer[idx_vel_x];
+			double pressure_diff = x(idx_center) - x(idx_center_i_minus1);
+			// Calculate new velocity
 			double new_vel_x = vel_x + dt * 1 / density * pressure_diff / _DELTA_X;
-			_vel_x_back_buffer[i + j * (_SIZE_X + 1)] = new_vel_x;
+			// Write data
+			_vel_x_back_buffer[idx_vel_x] = new_vel_x;
 		}
 	}
 	// Y vel
@@ -183,12 +188,17 @@ void MacGrid::pressureSolve(double dt)
 	{
 		for (int i = 0; i < _SIZE_X; ++i)
 		{
-			double vel_y = _vel_y_front_buffer[i + j * _SIZE_X];
-			double pressure_diff =
-				x(i + j * _SIZE_X)
-				- x(i + (j - 1) * _SIZE_X);
+			// Calculate indices
+			int idx_vel_y = 			twoDToLinearYBorders(i, j);
+			int idx_center = 			twoDToLinearCellCenter(i, j);
+			int idx_center_j_minus1 = 	twoDToLinearCellCenter(i, j - 1);
+			// Get the current velocity and pressure difference
+			double vel_y = _vel_y_front_buffer[idx_vel_y];
+			double pressure_diff = x(idx_center) - x(idx_center_j_minus1);
+			// Calculate new velocity
 			double new_vel_y = vel_y + dt * 1 / density * pressure_diff / _DELTA_Y;
-			_vel_y_back_buffer[i + j * _SIZE_X] = new_vel_y;
+			// Write data
+			_vel_y_back_buffer[idx_vel_y] = new_vel_y;
 		}
 	}
 
@@ -197,8 +207,9 @@ void MacGrid::pressureSolve(double dt)
 	{
 		for (int i = 0; i < _SIZE_X; ++i)
 		{
-			double new_color = _color_front_buffer[i + j * _SIZE_X];
-			_color_back_buffer[i + j * _SIZE_X] = new_color;
+			int idx = twoDToLinearCellCenter(i, j);
+			double new_color = _color_front_buffer[idx];
+			_color_back_buffer[idx] = new_color;
 		}
 	}
 
@@ -236,49 +247,97 @@ void MacGrid::clearCellTypeBuffer()
 	{
 		for (int i = 0; i < _SIZE_X; ++i)
 		{
-			_cell_type_buffer[i + j * _SIZE_X] = AIR;
+			_cell_type_buffer[twoDToLinearCellCenter(i, j)] = AIR;
 		}
 	}
+}
+
+// Index transforms
+void MacGrid::worldToCell(double x, double y, int* i, int* j) const
+{
+	*i = x / _DELTA_X;
+	*j = y / _DELTA_Y;
+}
+
+void MacGrid::cellToWorld(int i, int j, double* x, double* y) const
+{
+	*x = i * _DELTA_X;
+	*y = j * _DELTA_Y;
+}
+
+void MacGrid::linearTo2DXBorders(int idx, int* i, int* j) const
+{
+	*i = idx % (_SIZE_X + 1);
+	*j = idx / (_SIZE_X + 1);
+}
+
+void MacGrid::linearTo2DYBorders(int idx, int* i, int* j) const
+{
+	*i = idx % _SIZE_X;
+	*j = idx / _SIZE_X;
+}
+
+void MacGrid::linearTo2DCellCenter(int idx, int* i, int* j) const
+{
+	*i = idx % _SIZE_X;
+	*j = idx / _SIZE_X;
+}
+
+int MacGrid::twoDToLinearXBorders(int i, int j) const
+{
+	return i + j * (_SIZE_X + 1);
+}
+
+int MacGrid::twoDToLinearYBorders(int i, int j) const
+{
+	return i + j * _SIZE_X;
+}
+
+int MacGrid::twoDToLinearCellCenter(int i, int j) const
+{
+	return i + j * _SIZE_X;
 }
 
 // Getters
 /**
 	Returns an interpolated value due to the mac grid structure.
 */
-double MacGrid::velX(int x, int y) const
+double MacGrid::velX(int i, int j) const
 {
-	return (_vel_x_front_buffer[x + y * (_SIZE_X + 1)] +
-		_vel_x_front_buffer[x + 1 + y * (_SIZE_X + 1)]) / 2;
+	int idx = twoDToLinearXBorders(i, j);
+	int idx_i_plus1 = twoDToLinearXBorders(i + 1, j);
+	return (_vel_x_front_buffer[idx] + _vel_x_front_buffer[idx_i_plus1]) / 2;
 }
 
 /**
 	Returns an interpolated value due to the mac grid structure.
 */
-double MacGrid::velY(int x, int y) const
+double MacGrid::velY(int i, int j) const
 {
-	return (_vel_y_front_buffer[x + y * _SIZE_X] +
-		_vel_y_front_buffer[x + (y + 1) * _SIZE_X]) / 2;
+	int idx = twoDToLinearYBorders(i, j);
+	int idx_j_plus1 = twoDToLinearYBorders(i, j + 1);
+	return (_vel_y_front_buffer[idx] + _vel_y_front_buffer[idx_j_plus1]) / 2;
 }
 
 /**
 	Returns u[x - 1/2][y], velocities are stored in the borders of the cells.
 */
-double MacGrid::velXHalfIndexed(int x, int y) const
+double MacGrid::velXHalfIndexed(int i, int j) const
 {
-	return _vel_x_front_buffer[x + y * (_SIZE_X + 1)];
+	return _vel_x_front_buffer[twoDToLinearXBorders(i, j)];
 }
 
 /**
 	Returns u[x][y - 1/2], velocities are stored in the borders of the cells.
 */
-double MacGrid::velYHalfIndexed(int x, int y) const
+double MacGrid::velYHalfIndexed(int i, int j) const
 {
-	return _vel_y_front_buffer[x + y * _SIZE_X];
+	return _vel_y_front_buffer[twoDToLinearYBorders(i, j)];
 }
 
-double MacGrid::color(int x, int y) const
+double MacGrid::color(int i, int j) const
 {
-	return _color_front_buffer[x + y * _SIZE_X];
+	return _color_front_buffer[twoDToLinearCellCenter(i, j)];
 }
 
 /**
@@ -305,10 +364,10 @@ double MacGrid::velXInterpolated(double x, double y) const
 	j_plus1 = CLAMP(j_plus1, 0, _SIZE_Y - 1);
 	
 	// First interpolate in x, then in y
-	double v_x_00 = _vel_x_front_buffer[i + j * (_SIZE_X + 1)];
-	double v_x_10 = _vel_x_front_buffer[i_plus1 + j * (_SIZE_X + 1)];
-	double v_x_01 = _vel_x_front_buffer[i + j_plus1 * (_SIZE_X + 1)];
-	double v_x_11 = _vel_x_front_buffer[i_plus1 + j_plus1 * (_SIZE_X + 1)];
+	double v_x_00 = _vel_x_front_buffer[twoDToLinearXBorders(i, j)];
+	double v_x_10 = _vel_x_front_buffer[twoDToLinearXBorders(i_plus1, j)];
+	double v_x_01 = _vel_x_front_buffer[twoDToLinearXBorders(i, j_plus1)];
+	double v_x_11 = _vel_x_front_buffer[twoDToLinearXBorders(i_plus1, j_plus1)];
 	
 	// Interpolate x
 	double v_x_0 = (1 - i_frac) * v_x_00 + i_frac * v_x_10;
@@ -343,10 +402,10 @@ double MacGrid::velYInterpolated(double x, double y) const
 	j_plus1 = CLAMP(j_plus1, 0, _SIZE_Y + 1 - 1);
 	
 	// First interpolate in x, then in y
-	double v_y_00 = _vel_y_front_buffer[i + j * _SIZE_X];
-	double v_y_10 = _vel_y_front_buffer[i_plus1 + j * _SIZE_X];
-	double v_y_01 = _vel_y_front_buffer[i + j_plus1 * _SIZE_X];
-	double v_y_11 = _vel_y_front_buffer[i_plus1 + j_plus1 * _SIZE_X];
+	double v_y_00 = _vel_y_front_buffer[twoDToLinearYBorders(i, j)];
+	double v_y_10 = _vel_y_front_buffer[twoDToLinearYBorders(i_plus1, j)];
+	double v_y_01 = _vel_y_front_buffer[twoDToLinearYBorders(i, j_plus1)];
+	double v_y_11 = _vel_y_front_buffer[twoDToLinearYBorders(i_plus1, j_plus1)];
 	
 	// Interpolate x
 	double v_y_0 = (1 - i_frac) * v_y_00 + i_frac * v_y_10;
@@ -360,8 +419,8 @@ double MacGrid::velYInterpolated(double x, double y) const
 double MacGrid::colorInterpolated(double x, double y) const
 {
 	// Calculate indices
-	int i = x / _DELTA_X - 0.5;
-	int j = y / _DELTA_Y - 0.5;
+	int i = x / _DELTA_X - 0.5; // -0.5 Due to the MAC grid structure
+	int j = y / _DELTA_Y - 0.5; // -0.5 Due to the MAC grid structure
 	int i_plus1 = i + 1;
 	int j_plus1 = j + 1;
 	double i_frac = x / _DELTA_X - 0.5 - i;
@@ -377,10 +436,10 @@ double MacGrid::colorInterpolated(double x, double y) const
 	j_plus1 = CLAMP(j_plus1, 0, _SIZE_Y - 1);
 	
 	// First interpolate in x, then in y
-	double color_00 = _color_front_buffer[i + j * _SIZE_X];
-	double color_10 = _color_front_buffer[i_plus1 + j * _SIZE_X];
-	double color_01 = _color_front_buffer[i + j_plus1 * _SIZE_X];
-	double color_11 = _color_front_buffer[i_plus1 + j_plus1 * _SIZE_X];
+	double color_00 = _color_front_buffer[twoDToLinearCellCenter(i, j)];
+	double color_10 = _color_front_buffer[twoDToLinearCellCenter(i_plus1, j)];
+	double color_01 = _color_front_buffer[twoDToLinearCellCenter(i, j_plus1)];
+	double color_11 = _color_front_buffer[twoDToLinearCellCenter(i_plus1, j_plus1)];
 	
 	// Interpolate x
 	double color_0 = (1 - i_frac) * color_00 + i_frac * color_10;
@@ -403,19 +462,19 @@ CellType MacGrid::cellType(int i, int j) const
 	}
 	else
 	{
-		return _cell_type_buffer[i + j * _SIZE_X];
+		return _cell_type_buffer[twoDToLinearCellCenter(i, j)];
 	}
 }
 
 /**
 	Sampling on borders yields LIQUID if the point neighbors a liquid cell
 */
-CellType MacGrid::cellTypeXHalfIndexed(int x, int y) const
+CellType MacGrid::cellTypeXHalfIndexed(int i, int j) const
 {
 	// Look at the cells on either side of the point
 	// (which is on the border of two cells)
-	CellType left_type = cellType(x, y);
-	CellType right_type = cellType(x - 1, y);
+	CellType left_type = cellType(i, j);
+	CellType right_type = cellType(i - 1, j);
 
 	return
 		left_type == SOLID || right_type == SOLID ? SOLID :
@@ -426,12 +485,12 @@ CellType MacGrid::cellTypeXHalfIndexed(int x, int y) const
 /**
 	Sampling on borders yields LIQUID if the point neighbors a liquid cell
 */
-CellType MacGrid::cellTypeYHalfIndexed(int x, int y) const
+CellType MacGrid::cellTypeYHalfIndexed(int i, int j) const
 {
 	// Look at the cells on either side of the point
 	// (which is on the border of two cells)
-	CellType upper_type = cellType(x, y);
-	CellType lower_type = cellType(x, y - 1);
+	CellType upper_type = cellType(i, j);
+	CellType lower_type = cellType(i, j - 1);
 
 	return
 		upper_type == SOLID || lower_type == SOLID ? SOLID :
@@ -439,19 +498,19 @@ CellType MacGrid::cellTypeYHalfIndexed(int x, int y) const
 		AIR);
 }
 
-double MacGrid::divVelX(int x, int y) const
+double MacGrid::divVelX(int i, int j) const
 {
 	return 
-		(_vel_x_front_buffer[x + 1 + y * (_SIZE_X + 1)]
-		- _vel_x_front_buffer[x + y * (_SIZE_X + 1)])
+		(_vel_x_front_buffer[twoDToLinearXBorders(i + 1, j)]
+		- _vel_x_front_buffer[twoDToLinearXBorders(i, j)])
 		/ _DELTA_X;
 }
 
-double MacGrid::divVelY(int x, int y) const
+double MacGrid::divVelY(int i, int j) const
 {
 	return
-		(_vel_y_front_buffer[x + (y + 1) * _SIZE_X]
-		- _vel_y_front_buffer[x + y * _SIZE_X])
+		(_vel_y_front_buffer[twoDToLinearYBorders(i, j + 1)]
+		- _vel_y_front_buffer[twoDToLinearYBorders(i, j)])
 		/ _DELTA_Y;
 }
 
@@ -488,26 +547,26 @@ double MacGrid::deltaY() const
 // Setters
 /**
 */
-void MacGrid::setVelX(int x, int y, double vel_x)
+void MacGrid::setVelX(int i, int j, double vel_x)
 {
-	_vel_x_front_buffer[x + y * (_SIZE_X + 1)] = vel_x;
+	_vel_x_front_buffer[twoDToLinearXBorders(i, j)] = vel_x;
 }
 
 /**
 */
-void MacGrid::setVelY(int x, int y, double vel_y)
+void MacGrid::setVelY(int i, int j, double vel_y)
 {
-	_vel_y_front_buffer[x + y * _SIZE_X] = vel_y;
+	_vel_y_front_buffer[twoDToLinearYBorders(i, j)] = vel_y;
 }
 
-void MacGrid::setColor(int x, int y, double color)
+void MacGrid::setColor(int i, int j, double color)
 {
-	_color_front_buffer[x + y * _SIZE_X] = color;
+	_color_front_buffer[twoDToLinearCellCenter(i, j)] = color;
 }
 
-void MacGrid::setCellType(int x, int y, CellType cell_type)
+void MacGrid::setCellType(int i, int j, CellType cell_type)
 {
-	_cell_type_buffer[x + y * _SIZE_X] = cell_type;
+	_cell_type_buffer[twoDToLinearCellCenter(i, j)] = cell_type;
 }
 
 /**
@@ -543,10 +602,10 @@ void MacGrid::addToVelXInterpolated(double x, double y, double vel_x)
 	double v_x_11 = i_frac * v_x_1;
 
 	// Write data
-	_vel_x_back_buffer[i + j * (_SIZE_X + 1)] += v_x_00;
-	_vel_x_back_buffer[i_plus1 + j * (_SIZE_X + 1)] += v_x_10;
-	_vel_x_back_buffer[i + j_plus1 * (_SIZE_X + 1)] += v_x_01;
-	_vel_x_back_buffer[i_plus1 + j_plus1 * (_SIZE_X + 1)] += v_x_11;
+	_vel_x_back_buffer[twoDToLinearXBorders(i, j)] 				+= v_x_00;
+	_vel_x_back_buffer[twoDToLinearXBorders(i_plus1, j)] 		+= v_x_10;
+	_vel_x_back_buffer[twoDToLinearXBorders(i, j_plus1)] 		+= v_x_01;
+	_vel_x_back_buffer[twoDToLinearXBorders(i_plus1, j_plus1)] 	+= v_x_11;
 }
 
 /**
@@ -582,10 +641,10 @@ void MacGrid::addToVelYInterpolated(double x, double y, double vel_y)
 	double v_y_11 = i_frac * v_y_1;
 
 	// Write data
-	_vel_y_back_buffer[i + j * _SIZE_X] += v_y_00;
-	_vel_y_back_buffer[i_plus1 + j * _SIZE_X] += v_y_10;
-	_vel_y_back_buffer[i + j_plus1 * _SIZE_X] += v_y_01;
-	_vel_y_back_buffer[i_plus1 + j_plus1 * _SIZE_X] += v_y_11;
+	_vel_y_back_buffer[twoDToLinearYBorders(i, j)] 				+= v_y_00;
+	_vel_y_back_buffer[twoDToLinearYBorders(i_plus1, j)] 		+= v_y_10;
+	_vel_y_back_buffer[twoDToLinearYBorders(i, j_plus1)] 		+= v_y_01;
+	_vel_y_back_buffer[twoDToLinearYBorders(i_plus1, j_plus1)] 	+= v_y_11;
 }
 
 /**
@@ -621,10 +680,10 @@ void MacGrid::addToColorInterpolated(double x, double y, double color)
 	double color_11 = i_frac * color_1;
 	
 	// Write data
-	_color_back_buffer[i + j * _SIZE_X] += color_00;
-	_color_back_buffer[i_plus1 + j * _SIZE_X] += color_10;
-	_color_back_buffer[i + j_plus1 * _SIZE_X] += color_01;
-	_color_back_buffer[i_plus1 + j_plus1 * _SIZE_X] += color_11;
+	_color_back_buffer[twoDToLinearCellCenter(i, j)] 				+= color_00;
+	_color_back_buffer[twoDToLinearCellCenter(i_plus1, j)] 			+= color_10;
+	_color_back_buffer[twoDToLinearCellCenter(i, j_plus1)] 			+= color_01;
+	_color_back_buffer[twoDToLinearCellCenter(i_plus1, j_plus1)] 	+= color_11;
 }
 
 
@@ -636,7 +695,7 @@ void MacGrid::_advectVelX(double dt)
 		for (int i = 0; i < _SIZE_X + 1; ++i)
 		{
 			// Write data
-			_vel_x_back_buffer[i + j * (_SIZE_X + 1)] = 0;
+			_vel_x_back_buffer[twoDToLinearXBorders(i, j)] = 0;
 		}
 	}
 	for (int j = 0; j < _SIZE_Y; ++j)
@@ -645,6 +704,9 @@ void MacGrid::_advectVelX(double dt)
 		{
 			if (cellTypeXHalfIndexed(i, j) == LIQUID)
 			{ // Only advect the liquid cells
+//#define USE_EULER
+#ifdef USE_EULER
+				// Old Euler solution
 				// Particle position
 				double x_pos = i * _DELTA_X;
 				double y_pos = (j + 0.5) * _DELTA_Y;
@@ -658,7 +720,49 @@ void MacGrid::_advectVelX(double dt)
 				double y_pos_prev = y_pos - v_y * dt;
 
 				// Write data (in back buffer)
+				addToVelXInterpolated(x_pos_prev, y_pos_prev, v_x);		
+#else
+				// Runge Kutta
+				// Particle position
+				double x_pos = i * _DELTA_X;
+				double y_pos = (j + 0.5) * _DELTA_Y;
+
+				// Velcoity
+				double v_x = velXInterpolated(x_pos, y_pos);
+				double v_y = velYInterpolated(x_pos, y_pos);
+
+				double k_1x = velXInterpolated(x_pos, y_pos);
+				double k_1y = velYInterpolated(x_pos, y_pos);
+				
+				double k_2x = velXInterpolated(
+					x_pos + 1.0/2 * dt * k_1x,
+					y_pos + 1.0/2 * dt * k_1y);
+				double k_2y = velYInterpolated(
+					x_pos + 1.0/2 * dt * k_1x,
+					y_pos + 1.0/2 * dt * k_1y);
+
+				double k_3x = velXInterpolated(
+					x_pos + 3.0/4 * dt * k_2x,
+					y_pos + 3.0/4 * dt * k_2y);
+				double k_3y = velYInterpolated(
+					x_pos + 3.0/4 * dt * k_2x,
+					y_pos + 3.0/4 * dt * k_2y);
+
+				double x_pos_prev = x_pos -
+				dt * 1.0/9 * (
+					2 * k_1x +
+					3 * k_2x +
+					4 * k_3x);
+				double y_pos_prev = y_pos -
+				dt * 1.0/6 * (
+					2 * k_1y +
+					3 * k_2y +
+					4 * k_3y);
+
+				// Write data (in back buffer)
 				addToVelXInterpolated(x_pos_prev, y_pos_prev, v_x);
+#endif
+
 			}
 		}
 	}
@@ -672,7 +776,7 @@ void MacGrid::_advectVelY(double dt)
 		for (int i = 0; i < _SIZE_X; ++i)
 		{
 			// Write data
-			_vel_y_back_buffer[i + j * _SIZE_X] = 0;
+			_vel_y_back_buffer[twoDToLinearYBorders(i, j)] = 0;
 		}
 	}
 	for (int j = 0; j < _SIZE_Y + 1; ++j)
@@ -681,6 +785,8 @@ void MacGrid::_advectVelY(double dt)
 		{
 			if (cellTypeYHalfIndexed(i, j) == LIQUID)
 			{ // Only advect the liquid cells
+#ifdef USE_EULER
+				// Old Euler integration
 				// Particle position
 				double x_pos = (i + 0.5) * _DELTA_X;
 				double y_pos = j * _DELTA_Y;
@@ -695,6 +801,48 @@ void MacGrid::_advectVelY(double dt)
 
 				// Write data (in back buffer)
 				addToVelYInterpolated(x_pos_prev, y_pos_prev, v_y);
+
+#else
+				// Runge Kutta
+				// Particle position
+				double x_pos = (i + 0.5) * _DELTA_X;
+				double y_pos = j * _DELTA_Y;
+
+				// Velcoity
+				double v_x = velXInterpolated(x_pos, y_pos);
+				double v_y = velYInterpolated(x_pos, y_pos);
+
+				double k_1x = velXInterpolated(x_pos, y_pos);
+				double k_1y = velYInterpolated(x_pos, y_pos);
+				
+				double k_2x = velXInterpolated(
+					x_pos + 1.0/2 * dt * k_1x,
+					y_pos + 1.0/2 * dt * k_1y);
+				double k_2y = velYInterpolated(
+					x_pos + 1.0/2 * dt * k_1x,
+					y_pos + 1.0/2 * dt * k_1y);
+
+				double k_3x = velXInterpolated(
+					x_pos + 3.0/4 * dt * k_2x,
+					y_pos + 3.0/4 * dt * k_2y);
+				double k_3y = velYInterpolated(
+					x_pos + 3.0/4 * dt * k_2x,
+					y_pos + 3.0/4 * dt * k_2y);
+
+				double x_pos_prev = x_pos -
+				dt * 1.0/9 * (
+					2 * k_1x +
+					3 * k_2x +
+					4 * k_3x);
+				double y_pos_prev = y_pos -
+				dt * 1.0/6 * (
+					2 * k_1y +
+					3 * k_2y +
+					4 * k_3y);
+
+				// Write data (in back buffer)
+				addToVelYInterpolated(x_pos_prev, y_pos_prev, v_y);
+#endif
 			}
 		}
 	}
@@ -708,7 +856,7 @@ void MacGrid::_advectColor(double dt)
 		for (int i = 0; i < _SIZE_X; ++i)
 		{
 			// Write data
-			_color_back_buffer[i + j * _SIZE_X] = 0;
+			_color_back_buffer[twoDToLinearCellCenter(i, j)] = 0;
 		}
 	}
 	for (int j = 0; j < _SIZE_Y; ++j)

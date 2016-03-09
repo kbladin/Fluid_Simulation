@@ -31,23 +31,26 @@ public:
 	void clearCellTypeBuffer();
 
 	// Index transforms
-	void worldToCell(double x, double y, int* i, int* j);
-	void cellToWorld(int i, int j, double* x, double* y);
-	void linearIndexTo2DIndexXBorders(int idx, int* i, int* j);
-	void linearIndexTo2DIndexYBorders(int idx, int* i, int* j);
-	void linearIndexTo2DIndexCellCenter(int idx, int* i, int* j);
+	void worldToCell(double x, double y, int* i, int* j) const;
+	void cellToWorld(int i, int j, double* x, double* y) const;
+	void linearTo2DXBorders(int idx, int* i, int* j) const;
+	void linearTo2DYBorders(int idx, int* i, int* j) const;
+	void linearTo2DCellCenter(int idx, int* i, int* j) const;
+	int twoDToLinearXBorders(int i, int j) const;
+	int twoDToLinearYBorders(int i, int j) const;
+	int twoDToLinearCellCenter(int i, int j) const;
 
 	// Getters
-	double velX(int x, int y) const;
-	double velY(int x, int y) const;
-	double velXHalfIndexed(int x, int y) const;
-	double velYHalfIndexed(int x, int y) const;
-	double color(int x, int y) const;
+	double velX(int i, int j) const;
+	double velY(int i, int j) const;
+	double velXHalfIndexed(int i, int j) const;
+	double velYHalfIndexed(int i, int j) const;
+	double color(int i, int j) const;
 	double velXInterpolated(double x, double y) const;
 	double velYInterpolated(double x, double y) const;
 	double colorInterpolated(double x, double y) const;
-	double divVelX(int x, int y) const;
-	double divVelY(int x, int y) const;
+	double divVelX(int i, int j) const;
+	double divVelY(int i, int j) const;
 	int sizeX() const;
 	int sizeY() const;
 	double lengthX() const;
@@ -55,14 +58,14 @@ public:
 	double deltaX() const;
 	double deltaY() const;
 	CellType cellType(int i, int j) const;
-	CellType cellTypeXHalfIndexed(int x, int y) const;
-	CellType cellTypeYHalfIndexed(int x, int y) const;
+	CellType cellTypeXHalfIndexed(int i, int j) const;
+	CellType cellTypeYHalfIndexed(int i, int j) const;
 	
 	// Setters
-	void setVelX(int x, int y, double vel_x);
-	void setVelY(int x, int y, double vel_y);
-	void setColor(int x, int y, double color);
-	void setCellType(int x, int y, CellType cell_type);
+	void setVelX(int i, int j, double vel_x);
+	void setVelY(int i, int j, double vel_y);
+	void setColor(int i, int j, double color);
+	void setCellType(int i, int j, CellType cell_type);
 	void addToVelXInterpolated(double x, double y, double vel_x);
 	void addToVelYInterpolated(double x, double y, double vel_y);
 	void addToColorInterpolated(double x, double y, double color);
