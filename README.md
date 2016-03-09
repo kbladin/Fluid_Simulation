@@ -4,6 +4,7 @@
 * Staggered Mac Grid
 * Runge Kutta solver
 * Pressure solve (using the linear algebra library "Eigen")
+* Enforce Dirichlet boundary condition
 
 ## Not Yet Implemented
 * Adaptive time steps
