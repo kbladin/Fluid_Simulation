@@ -17,9 +17,9 @@ public:
 	void advectParticles(double dt);
 	void updateCellTypesWithParticles();
 private:
-	MacGrid* _grid;
-	Renderer* _renderer;
-	MarkerParticleSet* _particle_set;
+	std::unique_ptr<MacGrid> _grid;
+	std::unique_ptr<Renderer> _renderer;
+	std::unique_ptr<MarkerParticleSet> _particle_set;
 };
 
 #endif

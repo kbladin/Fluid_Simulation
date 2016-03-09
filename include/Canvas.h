@@ -2,6 +2,7 @@
 #define CANVAS_H
 
 #include <math.h>
+#include <vector>
 
 class Color
 {
@@ -37,7 +38,7 @@ public:
 private:
 	Color _line_color;
 	Color _fill_color;
-	Color* _pixel_data;
+	std::vector<Color> _pixel_data;
 	const int _WIDTH;
 	const int _HEIGHT;
 };

@@ -24,7 +24,7 @@ Canvas::Canvas(int width, int height) :
 	_fill_color(1,1,1)
 {
 	// Allocate data
-	_pixel_data = new Color[_WIDTH * _HEIGHT];
+	_pixel_data.resize(_WIDTH * _HEIGHT);
 
 	// Reset data
 	for (int j = 0; j < _HEIGHT; ++j)
@@ -40,7 +40,6 @@ Canvas::Canvas(int width, int height) :
 
 Canvas::~Canvas()
 {
-	delete[] _pixel_data;
 }
 
 void Canvas::drawLine(int from_x, int from_y, int to_x, int to_y)

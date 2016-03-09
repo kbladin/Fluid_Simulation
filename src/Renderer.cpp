@@ -151,7 +151,7 @@ void Renderer::renderParticlesToCanvas(const MarkerParticleSet* particle_set)
 	}
 }
 
-void Renderer::writeCanvasToPpm( const char* file_path)
+void Renderer::writeCanvasToPpm(const char* file_path)
 {
 	int w = _canvas->width();
 	int h = _canvas->height();

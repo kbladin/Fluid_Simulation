@@ -30,6 +30,13 @@ public:
 
 	void clearCellTypeBuffer();
 
+	// Index transforms
+	void worldToCell(double x, double y, int* i, int* j);
+	void cellToWorld(int i, int j, double* x, double* y);
+	void linearIndexTo2DIndexXBorders(int idx, int* i, int* j);
+	void linearIndexTo2DIndexYBorders(int idx, int* i, int* j);
+	void linearIndexTo2DIndexCellCenter(int idx, int* i, int* j);
+
 	// Getters
 	double velX(int x, int y) const;
 	double velY(int x, int y) const;
@@ -78,14 +85,15 @@ private:
 	// Always render to back bufer from front buffer, then swap them
 	// Since advection can not be done in place, another set of data is needed
 	// (except for when adding forces)
-	double* _vel_x_front_buffer;
-	double* _vel_y_front_buffer;
-	double* _color_front_buffer;
-	CellType* _cell_type_buffer;
+	std::vector<double> _vel_x_front_buffer;
+	std::vector<double> _vel_y_front_buffer;
+	std::vector<double> _color_front_buffer;
+	
+	std::vector<double> _vel_x_back_buffer;
+	std::vector<double> _vel_y_back_buffer;
+	std::vector<double> _color_back_buffer;
 
-	double* _vel_x_back_buffer;
-	double* _vel_y_back_buffer;
-	double* _color_back_buffer;
+	std::vector<CellType> _cell_type_buffer;
 
 	// Sparse matrix for CG solve
     Eigen::SparseMatrix<double> A;

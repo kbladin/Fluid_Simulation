@@ -15,15 +15,15 @@ MacGrid::MacGrid(
 	_DELTA_X(length_x / size_x),
 	_DELTA_Y(length_y / size_y)
 {
-	_vel_x_front_buffer = new double[(size_x + 1) * size_y];
-	_vel_y_front_buffer = new double[size_x * (size_y + 1)];
-	_color_front_buffer = new double[size_x * size_y];
+	_vel_x_front_buffer.resize((size_x + 1) * size_y);
+	_vel_y_front_buffer.resize(size_x * (size_y + 1));
+	_color_front_buffer.resize(size_x * size_y);
 
-	_vel_x_back_buffer = new double[(size_x + 1) * size_y];
-	_vel_y_back_buffer = new double[size_x * (size_y + 1)];
-	_color_back_buffer = new double[size_x * size_y];
+	_vel_x_back_buffer.resize((size_x + 1) * size_y);
+	_vel_y_back_buffer.resize(size_x * (size_y + 1));
+	_color_back_buffer.resize(size_x * size_y);
 
-	_cell_type_buffer = new CellType[size_x * size_y];
+	_cell_type_buffer.resize(size_x * size_y);
 
 	// Reset data
 	for (int i = 0; i < size_x * size_y; ++i)
@@ -82,14 +82,7 @@ MacGrid::MacGrid(
 
 MacGrid::~MacGrid()
 {
-	delete[] _vel_x_front_buffer;
-	delete[] _vel_y_front_buffer;
-	delete[] _color_front_buffer;
-	delete[] _cell_type_buffer;
-
-	delete[] _vel_x_back_buffer;
-	delete[] _vel_y_back_buffer;
-	delete[] _color_back_buffer;
+	
 }
 
 void MacGrid::advect(double dt)
@@ -746,15 +739,15 @@ void MacGrid::_advectColor(double dt)
 
 void MacGrid::_swapBuffers()
 {
-	double* vel_x_tmp = _vel_x_front_buffer;
-	double* vel_y_tmp = _vel_y_front_buffer;
-	double* color_tmp = _color_front_buffer;
+	std::vector<double> vel_x_tmp = std::move(_vel_x_front_buffer);
+	std::vector<double> vel_y_tmp = std::move(_vel_y_front_buffer);
+	std::vector<double> color_tmp = std::move(_color_front_buffer);
 
-	_vel_x_front_buffer = _vel_x_back_buffer;
-	_vel_y_front_buffer = _vel_y_back_buffer;
-	_color_front_buffer = _color_back_buffer;
+	_vel_x_front_buffer = std::move(_vel_x_back_buffer);
+	_vel_y_front_buffer = std::move(_vel_y_back_buffer);
+	_color_front_buffer = std::move(_color_back_buffer);
 
-	_vel_x_back_buffer = vel_x_tmp;
-	_vel_y_back_buffer = vel_y_tmp;
-	_color_back_buffer = color_tmp;
+	_vel_x_back_buffer = std::move(vel_x_tmp);
+	_vel_y_back_buffer = std::move(vel_y_tmp);
+	_color_back_buffer = std::move(color_tmp);
 }

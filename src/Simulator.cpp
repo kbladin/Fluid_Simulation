@@ -5,13 +5,13 @@ static const int WORLD_SIZE = 10;
 
 Simulator::Simulator()
 {
-	_grid = new MacGrid(
+	_grid = std::unique_ptr<MacGrid>(new MacGrid(
 		GRID_SIZE, 		// Size_x
 		GRID_SIZE, 		// Size_y
 		WORLD_SIZE, 	// Length_x
-		WORLD_SIZE); 	// Length_y
-	_particle_set = new MarkerParticleSet();
-	_renderer = new Renderer(0,0, WORLD_SIZE, WORLD_SIZE);
+		WORLD_SIZE)); 	// Length_y
+	_particle_set = std::unique_ptr<MarkerParticleSet>(new MarkerParticleSet());
+	_renderer = std::unique_ptr<Renderer>(new Renderer(0,0, WORLD_SIZE, WORLD_SIZE));
 	
 	for (int j = 0; j < _grid->sizeY(); ++j)
 	{
@@ -30,7 +30,7 @@ Simulator::Simulator()
 	//}
 
 	// Setup
-	int n_frames = 200;
+	int n_frames = 3;
 	double seconds_per_frame = 1;
 	
 	// Start simulation
@@ -64,10 +64,10 @@ Simulator::Simulator()
 		_renderer->clearCanvas();
 		//_renderer->renderColorToCanvas(_grid);
 		//_renderer->renderGridCellsToCanvas(_grid);
-		_renderer->renderParticlesToCanvas(_particle_set);
-		_renderer->renderGridVelocitiesToCanvas(_grid);
+		_renderer->renderParticlesToCanvas(_particle_set.get());
+		_renderer->renderGridVelocitiesToCanvas(_grid.get());
 		
-		_renderer->writeCanvasToPpm( str.str().c_str());
+		_renderer->writeCanvasToPpm(str.str().c_str());
 	}
 }
 
@@ -111,7 +111,5 @@ void Simulator::updateCellTypesWithParticles()
 
 Simulator::~Simulator()
 {
-	delete _grid;
-	delete _particle_set;
-	delete _renderer;
+
 }
