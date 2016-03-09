@@ -6,10 +6,11 @@
 * Pressure solve (using the linear algebra library "Eigen")
 * Enforce Dirichlet boundary condition
 
+Example simulation:
+![](images/fluid.gif "Fluid Simulation")
+
 ## Not Yet Implemented
 * Adaptive time steps
 * Level set to separate fluid from air
 * 3D simulation
 * Sophisticated rendering
-
-![](images/fluid.gif "Fluid Simulation")
