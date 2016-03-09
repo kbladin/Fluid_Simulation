@@ -7,6 +7,7 @@
 * Enforce Dirichlet boundary condition
 
 Example simulation:
+
 ![](images/fluid.gif "Fluid Simulation")
 
 ## Not Yet Implemented
