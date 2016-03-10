@@ -2,6 +2,7 @@
 
 ## Implemented
 * Staggered Mac Grid
+* Bilinear interpolation for velocity advection
 * Runge Kutta solver
 * Pressure solve (using the linear algebra library "Eigen")
 * Enforce Dirichlet boundary condition
@@ -12,6 +13,8 @@ Example simulation:
 
 ## Not Yet Implemented
 * Adaptive time steps
+* Other interpolation alternatives
 * Level set to separate fluid from air
+* Velocity extension for level set
 * 3D simulation
 * Sophisticated rendering
