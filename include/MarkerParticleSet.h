@@ -1,24 +1,21 @@
 #ifndef PARTICLE_SET_H
 #define PARTICLE_SET_H
 
-// Particles stored as linked list
+#include <vector>
+
 class MarkerParticle
 {
 public:
 	MarkerParticle();
 	MarkerParticle(double pos_x, double pos_y);
 	~MarkerParticle();
-	// Connects p after current particle
-	void connect(MarkerParticle* p);
 
 	// Getters
-	double posX();
-	double posY();
+	double posX() const;
+	double posY() const;
 
 	// Setters
 	void setPosition(double pos_x, double pos_y);
-
-	MarkerParticle* next;
 private:
 	double _pos_x;
 	double _pos_y;
@@ -27,16 +24,22 @@ private:
 class MarkerParticleSet
 {
 public:
-	MarkerParticleSet();
+	MarkerParticleSet(int size);
 	~MarkerParticleSet();
 
 	void addParticle(double pos_x, double pos_y);
 
-	// Returns the first real particle
-	MarkerParticle* getFirst() const;
-	
+	typedef std::vector<MarkerParticle>::iterator iterator;
+	typedef std::vector<MarkerParticle>::const_iterator const_iterator;
+
+	MarkerParticleSet::iterator begin();
+	MarkerParticleSet::iterator end();
+
+	MarkerParticleSet::const_iterator begin() const;
+	MarkerParticleSet::const_iterator end() const;
+
 private:
-	MarkerParticle _dummy_head;
+	std::vector<MarkerParticle> _particles;
 };
 
 #endif

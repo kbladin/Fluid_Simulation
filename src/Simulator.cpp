@@ -2,6 +2,7 @@
 
 static const int GRID_SIZE = 40;
 static const int WORLD_SIZE = 10;
+static const int N_PARTICLES = 500;
 
 Simulator::Simulator()
 {
@@ -10,8 +11,10 @@ Simulator::Simulator()
 		GRID_SIZE, 		// Size_y
 		WORLD_SIZE, 	// Length_x
 		WORLD_SIZE)); 	// Length_y
-	_particle_set = std::unique_ptr<MarkerParticleSet>(new MarkerParticleSet());
-	_renderer = std::unique_ptr<Renderer>(new Renderer(0,0, WORLD_SIZE, WORLD_SIZE));
+	_particle_set = std::unique_ptr<MarkerParticleSet>(
+		new MarkerParticleSet(N_PARTICLES));
+	_renderer = std::unique_ptr<Renderer>(
+		new Renderer(0,0, WORLD_SIZE, WORLD_SIZE));
 	
 	for (int j = 0; j < _grid->sizeY(); ++j)
 	{
@@ -21,10 +24,10 @@ Simulator::Simulator()
 		}
 	}
 
-	// Add a bunch of trace particles at random positions
-	for (int i = 0; i < 500; ++i)
+	// Set positions for all N_PARTICLES particles
+	for (auto it = _particle_set->begin(); it != _particle_set->end(); it++)
 	{
-		_particle_set->addParticle(
+		it->setPosition(
 			rand() / double(INT_MAX) * WORLD_SIZE,
 			rand() / double(INT_MAX) * WORLD_SIZE);
 	}
@@ -74,20 +77,18 @@ Simulator::Simulator()
 
 void Simulator::advectParticles(double dt)
 {
-	for (MarkerParticle* iter = _particle_set->getFirst();
-		iter != nullptr;
-		iter = iter->next)
+	for (auto it = _particle_set->begin(); it != _particle_set->end(); it++)
 	{
 		// Position in world
-		double pos_x = iter->posX();
-		double pos_y = iter->posY();
+		double pos_x = it->posX();
+		double pos_y = it->posY();
 
 		// Calculate new position
 		pos_x += _grid->velXInterpolated(pos_x, pos_y) * dt;
 		pos_y += _grid->velYInterpolated(pos_x, pos_y) * dt;
 		
 		// Write data
-		iter->setPosition(pos_x, pos_y);
+		it->setPosition(pos_x, pos_y);
 	}
 }
 
@@ -98,13 +99,11 @@ void Simulator::updateCellTypesWithParticles()
 
 	// Loop through all particles and set cells to liquid if they
 	// contain a particle
-	for (MarkerParticle* iter = _particle_set->getFirst();
-		iter != nullptr;
-		iter = iter->next)
+	for (auto it = _particle_set->begin(); it != _particle_set->end(); it++)
 	{
 		// Find the particles position in the grid
-		int x = (iter->posX() / _grid->lengthX()) * _grid->sizeX();
-		int y = (iter->posY() / _grid->lengthY()) * _grid->sizeY();
+		int x = (it->posX() / _grid->lengthX()) * _grid->sizeX();
+		int y = (it->posY() / _grid->lengthY()) * _grid->sizeY();
 
 		_grid->setCellType(x, y, LIQUID);
 	}

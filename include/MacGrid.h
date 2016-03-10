@@ -74,6 +74,18 @@ public:
 private:
 	void _swapBuffers();
 
+	void _getAdvectedPositionRK3(
+		double x_pos,
+		double y_pos,
+		double dt,
+		double* x,
+		double* y);
+	void _getAdvectedPositionForwardEuler(
+		double x_pos,
+		double y_pos,
+		double dt,
+		double* x,
+		double* y);
 	void _advectVelX(double dt);
 	void _advectVelY(double dt);
 	void _advectColor(double dt);
@@ -89,13 +101,13 @@ private:
 	// Always render to back bufer from front buffer, then swap them
 	// Since advection can not be done in place, another set of data is needed
 	// (except for when adding forces)
-	Grid<double> _vel_x_front_buffer;
-	Grid<double> _vel_y_front_buffer;
-	Grid<double> _color_front_buffer;
+	SizedGrid<double> _vel_x_front_buffer;
+	SizedGrid<double> _vel_y_front_buffer;
+	SizedGrid<double> _color_front_buffer;
 	
-	Grid<double> _vel_x_back_buffer;
-	Grid<double> _vel_y_back_buffer;
-	Grid<double> _color_back_buffer;
+	SizedGrid<double> _vel_x_back_buffer;
+	SizedGrid<double> _vel_y_back_buffer;
+	SizedGrid<double> _color_back_buffer;
 
 	Grid<CellType> _cell_type_buffer;
 

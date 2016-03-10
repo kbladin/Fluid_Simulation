@@ -14,7 +14,7 @@ Renderer::Renderer(double x_min, double y_min, double x_max, double y_max)
 
 Renderer::~Renderer()
 {
-	
+
 }
 
 void Renderer::clearCanvas()
@@ -139,13 +139,11 @@ void Renderer::renderParticlesToCanvas(const MarkerParticleSet* particle_set)
 	_canvas->setLineColor(Color(0,0,0));
 	_canvas->setFillColor(Color(0,0,0));
 
-	for (MarkerParticle* iter = particle_set->getFirst();
-		iter != nullptr;
-		iter = iter->next)
+	for (auto it = particle_set->begin(); it != particle_set->end(); it++)
 	{
 		// Position in pixel coordinates
-		int pos_x = - translate_x + scale_x * iter->posX();
-		int pos_y = - translate_y + scale_y * iter->posY();
+		int pos_x = - translate_x + scale_x * it->posX();
+		int pos_y = - translate_y + scale_y * it->posY();
 		
 		_canvas->drawPoint(pos_x, pos_y, 6);
 	}
