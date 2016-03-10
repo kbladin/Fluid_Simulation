@@ -109,13 +109,11 @@ int Grid<T>::twoDToLinear(int i, int j) const
 	return i + j * _SIZE_X;
 }
 
-/**
-	Does not consider border cases for efficiency. That needs to be handled
-	outside this function.
-*/
 template <class T>
 T Grid<T>::value(int i, int j) const
 {
+	i = CLAMP(i, 0, _SIZE_X - 1);
+	j = CLAMP(j, 0, _SIZE_Y - 1);
 	return data[twoDToLinear(i, j)];
 }
 
@@ -131,13 +129,11 @@ int Grid<T>::sizeY() const
 	return _SIZE_Y;
 }
 
-/**
-	Does not consider border cases for efficiency. That needs to be handled
-	outside this function.
-*/
 template <class T>
 T& Grid<T>::operator()(int i, int j)
 {
+	i = CLAMP(i, 0, _SIZE_X - 1);
+	j = CLAMP(j, 0, _SIZE_Y - 1);
 	return data[twoDToLinear(i, j)];
 }
 

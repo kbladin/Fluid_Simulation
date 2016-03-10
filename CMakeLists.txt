@@ -14,12 +14,15 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/modules)
 #add_subdirectory(${PROJECT_SOURCE_DIR}/ext/armadillo-6.500.5)
 #find_package(EIGEN REQUIRED)
 
+find_package(GLM REQUIRED)
+
 set(EIGEN3_INCLUDE_DIR "default value" CACHE PATH "description")
 
 include_directories ( "${EIGEN3_INCLUDE_DIR}" )
 
 # Add include directories
 include_directories(${EIGEN3_INCLUDE_DIR})
+include_directories(${GLM_INCLUDE_DIR})
 
 # Our own include directory
 set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR}/include)

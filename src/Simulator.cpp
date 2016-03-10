@@ -68,6 +68,7 @@ Simulator::Simulator()
 			_grid->enforceDirichlet();
 			_grid->pressureSolve(dt);
 			_grid->enforceDirichlet();
+			ExtendVelocity();
 
 			// Advect particles through fluid
 			advectParticles(dt);
@@ -75,10 +76,6 @@ Simulator::Simulator()
 		}
 
 		// Render
-		std::stringstream str;
-		str << "test" << i << ".ppm";
-
-
 		_renderer->clearCanvas();
 		//_renderer->renderColorToCanvas(_grid);
 		//_renderer->renderGridCellsToCanvas(_grid.get());
@@ -86,7 +83,9 @@ Simulator::Simulator()
 		//_renderer->renderLevelSetFunctionValuesToCanvas(_level_set.get());
 		_renderer->renderGridCellsToCanvas(_grid.get());
 		_renderer->renderGridVelocitiesToCanvas(_grid.get());
-		
+
+		std::stringstream str;
+		str << "test" << i << ".ppm";		
 		_renderer->writeCanvasToPpm(str.str().c_str());
 	}
 }
@@ -131,6 +130,48 @@ void Simulator::advectLevelSet(double dt)
 		}
 	}
 	*_level_set = std::move(new_level_set);
+}
+
+/**
+	Extends the velocity of the mac grid from the interface of the level set.
+*/
+void Simulator::ExtendVelocity()
+{
+	double dt = 0.7;
+	int iterations = 5;
+	for (int iter = 0; iter < iterations; ++iter)
+	{
+		for (int j = 0; j < _level_set->sizeX(); ++j)
+		{
+			for (int i = 0; i < _level_set->sizeY(); ++i)
+			{
+				// Currently doing extension everywhere. Not just narrow band.
+				// This is bad for efficiency
+				if (_grid->cellType(i, j) == LIQUID)
+					continue;
+				double vel_x = _grid->velX(i, j);
+				double vel_y = _grid->velY(i, j);
+				double grad_x = _level_set->computeUpwindGradientX(i, j, vel_x);
+				double grad_y = _level_set->computeUpwindGradientY(i, j, vel_y);
+
+				double level_set_val = (*_level_set)(i, j);
+
+				glm::dvec2 normal(grad_x, grad_y);
+				normal = glm::normalize(normal);
+
+				glm::dmat2 vel_grad = _grid->computeVelocityGradientMatrix(i, j);
+
+				glm::dvec2 change_rate =
+					- (vel_grad * normal) * glm::sign(level_set_val);
+
+				// Forward Euler
+				glm::dvec2 new_vel = glm::dvec2(vel_x, vel_y) + change_rate * dt;
+				_grid->setVelX(i, j, new_vel.x);
+				_grid->setVelY(i, j, new_vel.y);
+			}
+		}
+		_grid->_swapBuffers();
+	}
 }
 
 void Simulator::updateCellTypesWithParticles()

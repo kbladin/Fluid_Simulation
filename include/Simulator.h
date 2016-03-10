@@ -9,6 +9,8 @@
 #include <string>
 #include <sstream>
 
+#include <glm/glm.hpp>
+
 class Simulator
 {
 public:
@@ -17,6 +19,7 @@ public:
 	
 	void advectParticles(double dt);
 	void advectLevelSet(double dt);
+	void ExtendVelocity();
 	void updateCellTypesWithParticles();
 	void updateCellTypesWithLevelSet();
 private:

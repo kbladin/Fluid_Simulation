@@ -1,5 +1,7 @@
 #include <MacGrid.h>
 
+#define CLAMP(x, low, high) x < low ? low : (x > high ? high : x)
+
 MacGrid::MacGrid(
 	int size_x,
 	int size_y,
@@ -99,7 +101,7 @@ void MacGrid::addExternalForce(double dt, double F_x, double F_y)
 	{
 		for (int i =0 ; i < _SIZE_X; ++i)
 		{
-			//if (cellType(i, j) == LIQUID)
+			if (cellType(i, j) == LIQUID)
 			{ // Only add force to the liquid cells
 				// Euler integration (here write directly to front buffer for now)
 				double x_pos = (i + 0.5) * _DELTA_X;
@@ -382,6 +384,20 @@ double MacGrid::divVelY(int i, int j) const
 		(_vel_y_front_buffer.value(i, j + 1)
 		- _vel_y_front_buffer.value(i, j))
 		/ _DELTA_Y;
+}
+
+glm::dmat2 MacGrid::computeVelocityGradientMatrix(int i, int j)
+{
+	glm::dmat2 vel_grad;
+	vel_grad[0][0] = divVelX(i, j);
+	vel_grad[0][1] = (_vel_x_front_buffer.value(i, j + 1)
+		- _vel_x_front_buffer.value(i, j))
+		/ _DELTA_Y;
+	vel_grad[1][0] = (_vel_y_front_buffer.value(i + 1, j)
+		- _vel_y_front_buffer.value(i, j))
+		/ _DELTA_X;
+	vel_grad[1][1] = divVelY(i, j);
+	return vel_grad;
 }
 
 double MacGrid::lengthX() const

@@ -11,6 +11,7 @@
 
 #include <Eigen/SparseCore>
 #include <Eigen/IterativeLinearSolvers>
+#include <glm/glm.hpp>
 
 enum CellType
 {
@@ -52,6 +53,7 @@ public:
 	double colorInterpolated(double x, double y) const;
 	double divVelX(int i, int j) const;
 	double divVelY(int i, int j) const;
+	glm::dmat2 computeVelocityGradientMatrix(int i, int j);
 	int sizeX() const;
 	int sizeY() const;
 	double lengthX() const;
@@ -71,8 +73,9 @@ public:
 	void addToVelYInterpolated(double x, double y, double vel_y);
 	void addToColorInterpolated(double x, double y, double color);
 
-private:
 	void _swapBuffers();
+
+private:
 
 	void _getAdvectedPositionRK3(
 		double x_pos,
