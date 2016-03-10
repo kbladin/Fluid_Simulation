@@ -4,6 +4,7 @@
 #include <fstream>
 
 #include <MacGrid.h>
+#include <LevelSet.h>
 #include <Canvas.h>
 #include <MarkerParticleSet.h>
 
@@ -16,6 +17,7 @@ public:
 	void clearCanvas();
 	void renderGridVelocitiesToCanvas(const MacGrid* grid);
 	void renderGridCellsToCanvas(const MacGrid* grid);
+	void renderLevelSetFunctionValuesToCanvas(const LevelSet* level_set);
 	void renderColorToCanvas(const MacGrid* grid);
 	void renderParticlesToCanvas(const MarkerParticleSet* particle_set);
 

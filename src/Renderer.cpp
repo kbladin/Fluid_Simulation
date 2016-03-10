@@ -39,7 +39,6 @@ void Renderer::renderGridCellsToCanvas(const MacGrid* grid)
 
 	_canvas->setLineColor(Color(1,1,1));
 
-	// Render all velocities as lines
 	for (int j = 0; j < grid_size_y; ++j)
 	{
 		for (int i = 0; i < grid_size_x; ++i)
@@ -61,6 +60,40 @@ void Renderer::renderGridCellsToCanvas(const MacGrid* grid)
 		}
 	}
 }
+
+void Renderer::renderLevelSetFunctionValuesToCanvas(const LevelSet* level_set)
+{
+	int grid_size_x = level_set->sizeX();
+	int grid_size_y = level_set->sizeY();
+
+	double scale_x = _canvas->width() / (_x_max - _x_min);
+	double scale_y = _canvas->height() / (_y_max - _y_min);
+
+	double translate_x = 0.5 * (_x_min * _canvas->width());
+	double translate_y = 0.5 * (_y_min * _canvas->height());
+
+	// Cell size in pixels
+	double cell_size_x = level_set->deltaX() * scale_x;
+	double cell_size_y = level_set->deltaY() * scale_y;
+
+	_canvas->setLineColor(Color(1,1,1));
+
+	for (int j = 0; j < grid_size_y; ++j)
+	{
+		for (int i = 0; i < grid_size_x; ++i)
+		{
+			double value = level_set->value(i, j);
+			Color fill_color = Color(value, value, value);
+			_canvas->setFillColor(fill_color);
+			_canvas->fillRectangle(
+				- translate_x + i * cell_size_x,
+				- translate_y + j * cell_size_y,
+				- translate_x + (i + 1) * cell_size_x,
+				- translate_y + (j + 1) * cell_size_y);
+		}
+	}
+}
+
 
 void Renderer::renderColorToCanvas(const MacGrid* grid)
 {

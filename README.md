@@ -1,7 +1,7 @@
 # Eulerian_Fluid_Simulation
 
 ## Implemented
-* Staggered Mac Grid
+* Staggered MAC Grid
 * Bilinear interpolation for velocity advection
 * Runge Kutta solver
 * Pressure solve (using the linear algebra library "Eigen")

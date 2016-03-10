@@ -13,7 +13,7 @@ public:
 	// Constructors / Destructor
 	Grid(int size_x, int size_y);
 	~Grid();
-	Grid(Grid&& rhv);
+	//Grid(Grid&& rhv);
 	Grid<T>& operator=(Grid<T> to_copy);
 	
 	// Transform
@@ -22,6 +22,8 @@ public:
 
 	// Get
 	T value(int i, int j) const;
+	int sizeX() const;
+	int sizeY() const;
 
 	// Set
 	T& operator()(int i, int j);
@@ -42,10 +44,15 @@ public:
 	// Constructors / Destructor
 	SizedGrid(int size_x, int size_y, double delta_x, double delta_y);
 	~SizedGrid();
-	SizedGrid(SizedGrid&& rhv);	
+	//SizedGrid(SizedGrid&& rhv);	
 	SizedGrid<T>& operator=(SizedGrid<T> to_copy);
 
+	// Get
 	T valueInterpolated(double x, double y) const;
+	double deltaX() const;
+	double deltaY() const;
+
+	// Set
 	void addToValueInterpolated(double x, double y, T value);
 private:
 	const double _DELTA_X;
@@ -73,7 +80,7 @@ Grid<T>::~Grid()
 {
 
 } 
-
+/*
 template <class T>
 Grid<T>::Grid(Grid&& rhv) :
 	_SIZE_X(rhv._SIZE_X),
@@ -81,7 +88,7 @@ Grid<T>::Grid(Grid&& rhv) :
 {
 	data = std::move(rhv.data);
 }
-
+*/
 template <class T>
 Grid<T>& Grid<T>::operator=(Grid<T> to_copy)
 {
@@ -112,6 +119,18 @@ T Grid<T>::value(int i, int j) const
 	return data[twoDToLinear(i, j)];
 }
 
+template <class T>
+int Grid<T>::sizeX() const
+{
+	return _SIZE_X;
+}
+
+template <class T>
+int Grid<T>::sizeY() const
+{
+	return _SIZE_Y;
+}
+
 /**
 	Does not consider border cases for efficiency. That needs to be handled
 	outside this function.
@@ -135,7 +154,7 @@ SizedGrid<T>::~SizedGrid()
 {
 
 } 
-
+/*
 template <class T>
 SizedGrid<T>::SizedGrid(SizedGrid&& rhv) :
 	Grid<T>(std::move(rhv)),
@@ -143,7 +162,7 @@ SizedGrid<T>::SizedGrid(SizedGrid&& rhv) :
 	_DELTA_Y(rhv._DELTA_Y)
 {
 }
-
+*/
 template <class T>
 SizedGrid<T>& SizedGrid<T>::operator=(SizedGrid<T> to_copy)
 {
@@ -186,6 +205,18 @@ T SizedGrid<T>::valueInterpolated(double x, double y) const
 	return value;
 }
 
+template <class T>
+double SizedGrid<T>::deltaX() const
+{
+	return _DELTA_X;
+}
+
+template <class T>
+double SizedGrid<T>::deltaY() const
+{
+	return _DELTA_Y;
+}
+
 /**
 	Writes to the four closest grid points, writes to back buffer.
 */
@@ -225,6 +256,5 @@ void SizedGrid<T>::addToValueInterpolated(double x, double y, T value)
 	(*this)(i, j_plus1) 		+= value_01;
 	(*this)(i_plus1, j_plus1) 	+= value_11;
 }
-
 
 #endif

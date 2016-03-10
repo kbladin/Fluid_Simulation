@@ -1,7 +1,5 @@
 #include <MacGrid.h>
 
-#define CLAMP(x, low, high) x < low ? low : (x > high ? high : x)
-
 MacGrid::MacGrid(
 	int size_x,
 	int size_y,
@@ -70,10 +68,8 @@ void MacGrid::advect(double dt)
 {
 	// Advection is done separately since the attributes vel_x, vel_y and
 	// color are strored in different grids (MAC grid)
-
 	// Advect color through fluid
 	_advectColor(dt);
-
 	// Self advection of velocity components
 	_advectVelX(dt);
 	_advectVelY(dt);
@@ -83,6 +79,7 @@ void MacGrid::advect(double dt)
 
 void MacGrid::addExternalForce(double dt, double F_x, double F_y)
 {
+	/*
 	for (int j = _SIZE_Y * 3 / 7; j < _SIZE_Y * 4 / 7; ++j)
 	{
 		for (int i = _SIZE_X * 3 / 7; i < _SIZE_X * 4 / 7; ++i)
@@ -97,22 +94,22 @@ void MacGrid::addExternalForce(double dt, double F_x, double F_y)
 			}
 		}
 	}
-
-	//for (int j = 0; j < _SIZE_Y; ++j)
-	//{
-	//	for (int i =0 ; i < _SIZE_X; ++i)
-	//	{
-	//		if (cellType(i, j) == LIQUID)
-	//		{ // Only add force to the liquid cells
-	//			// Euler integration (here write directly to front buffer for now)
-	//			double x_pos = (i + 0.5) * _DELTA_X;
-	//			double y_pos = (j + 0.5) * _DELTA_Y;
-	//			double vel_y = velYInterpolated(x_pos, y_pos);
-	//			addToVelYInterpolated(x_pos, y_pos, F_y * dt);
-	//		}
-	//	}
-	//}
-	//_swapBuffers();
+*/
+	for (int j = 0; j < _SIZE_Y; ++j)
+	{
+		for (int i =0 ; i < _SIZE_X; ++i)
+		{
+			//if (cellType(i, j) == LIQUID)
+			{ // Only add force to the liquid cells
+				// Euler integration (here write directly to front buffer for now)
+				double x_pos = (i + 0.5) * _DELTA_X;
+				double y_pos = (j + 0.5) * _DELTA_Y;
+				double vel_y = velYInterpolated(x_pos, y_pos);
+				addToVelYInterpolated(x_pos, y_pos, F_y * dt);
+			}
+		}
+	}
+	_swapBuffers();
 }
 
 void MacGrid::pressureSolve(double dt)
