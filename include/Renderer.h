@@ -21,7 +21,7 @@ public:
 
 	void writeCanvasToPpm( const char* file_path);
 private:
-	Canvas* _canvas;
+	std::unique_ptr<Canvas> _canvas;
 
 	// World coordinates, defines a quad to render
 	double _x_min;

@@ -1,6 +1,8 @@
 #ifndef MAC_GRID_H
 #define MAC_GRID_H
 
+#include <Grid.h>
+
 #include <vector>
 #include <iostream>
 #include <random>
@@ -14,6 +16,9 @@ enum CellType
 {
 	LIQUID, AIR, SOLID
 };
+
+template class Grid<double>;
+template class Grid<CellType>;
 
 //! Let this have dense arrays for now
 class MacGrid
@@ -88,15 +93,15 @@ private:
 	// Always render to back bufer from front buffer, then swap them
 	// Since advection can not be done in place, another set of data is needed
 	// (except for when adding forces)
-	std::vector<double> _vel_x_front_buffer;
-	std::vector<double> _vel_y_front_buffer;
-	std::vector<double> _color_front_buffer;
+	Grid<double> _vel_x_front_buffer;
+	Grid<double> _vel_y_front_buffer;
+	Grid<double> _color_front_buffer;
 	
-	std::vector<double> _vel_x_back_buffer;
-	std::vector<double> _vel_y_back_buffer;
-	std::vector<double> _color_back_buffer;
+	Grid<double> _vel_x_back_buffer;
+	Grid<double> _vel_y_back_buffer;
+	Grid<double> _color_back_buffer;
 
-	std::vector<CellType> _cell_type_buffer;
+	Grid<CellType> _cell_type_buffer;
 
 	// Sparse matrix for CG solve
     Eigen::SparseMatrix<double> A;

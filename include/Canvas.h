@@ -1,8 +1,10 @@
 #ifndef CANVAS_H
 #define CANVAS_H
 
+#include <Grid.h>
+
 #include <math.h>
-#include <vector>
+
 
 class Color
 {
@@ -38,7 +40,7 @@ public:
 private:
 	Color _line_color;
 	Color _fill_color;
-	std::vector<Color> _pixel_data;
+	Grid<Color> _pixel_data;
 	const int _WIDTH;
 	const int _HEIGHT;
 };

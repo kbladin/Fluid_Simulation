@@ -1,7 +1,7 @@
 #include <Simulator.h>
 
 static const int GRID_SIZE = 40;
-static const int WORLD_SIZE = 5;
+static const int WORLD_SIZE = 10;
 
 Simulator::Simulator()
 {
@@ -43,7 +43,7 @@ Simulator::Simulator()
 		for (double frame_time = 0; frame_time < seconds_per_frame; frame_time += dt)
 		{
 			// Calculate dt (for now just set it)
-			dt = 0.001;
+			dt = 0.01;
 			// Update the fluid grid
 			//updateCellTypesWithParticles();
 			if (i < 10)

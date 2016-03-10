@@ -13,36 +13,17 @@ MacGrid::MacGrid(
 	_LENGTH_X(length_x),
 	_LENGTH_Y(length_y),
 	_DELTA_X(length_x / size_x),
-	_DELTA_Y(length_y / size_y)
+	_DELTA_Y(length_y / size_y),
+
+	_vel_x_front_buffer(size_x + 1, size_y),
+	_vel_y_front_buffer(size_x, size_y + 1),
+	_color_front_buffer(size_x, size_y),
+	_vel_x_back_buffer(size_x + 1, size_y),
+	_vel_y_back_buffer(size_x, size_y + 1),
+	_color_back_buffer(size_x, size_y),
+	_cell_type_buffer(size_x, size_y)
 {
-	_vel_x_front_buffer.resize((size_x + 1) * size_y);
-	_vel_y_front_buffer.resize(size_x * (size_y + 1));
-	_color_front_buffer.resize(size_x * size_y);
-
-	_vel_x_back_buffer.resize((size_x + 1) * size_y);
-	_vel_y_back_buffer.resize(size_x * (size_y + 1));
-	_color_back_buffer.resize(size_x * size_y);
-
-	_cell_type_buffer.resize(size_x * size_y);
-
-	// Reset data
-	for (int i = 0; i < size_x * size_y; ++i)
-	{
-		_color_front_buffer[i] = 0;
-		_color_back_buffer[i] = 0;
-		_cell_type_buffer[i] = LIQUID;
-	}
-	for (int i = 0; i < (size_x + 1) * size_y; ++i)
-	{
-		_vel_x_front_buffer[i] = 0;
-		_vel_x_back_buffer[i] = 0;
-	}
-	for (int i = 0; i < size_x * (size_y + 1); ++i)
-	{
-		_vel_y_front_buffer[i] = 0;
-		_vel_y_back_buffer[i] = 0;
-	}
-
+	// Allocate matrix
 	A = Eigen::SparseMatrix<double>(_SIZE_X * _SIZE_Y, _SIZE_X * _SIZE_Y);
 
 	for (int j = 0; j < _SIZE_Y; ++j)
@@ -109,10 +90,10 @@ void MacGrid::addExternalForce(double dt, double F_x, double F_y)
 			if (cellTypeXHalfIndexed(i, j) == LIQUID)
 			{ // Only add force to the liquid cells
 				// Euler integration (here write directly to front buffer for now)
-				_vel_x_front_buffer[twoDToLinearXBorders(i,j)] = 
-					_vel_x_front_buffer[twoDToLinearXBorders(i,j)] + F_x * dt;
-				_vel_y_front_buffer[twoDToLinearYBorders(i,j)] = 
-					_vel_y_front_buffer[twoDToLinearYBorders(i,j)] + F_y * dt;
+				_vel_x_front_buffer(i,j) = 
+					_vel_x_front_buffer(i,j) + F_x * dt;
+				_vel_y_front_buffer(i,j) = 
+					_vel_y_front_buffer(i,j) + F_y * dt;
 			}
 		}
 	}
@@ -171,16 +152,16 @@ void MacGrid::pressureSolve(double dt)
 		for (int i = 1; i < _SIZE_X; ++i)
 		{
 			// Calculate indices
-			int idx_vel_x = 			twoDToLinearXBorders(i, j);
+			//int idx_vel_x = 			twoDToLinearXBorders(i, j);
 			int idx_center = 			twoDToLinearCellCenter(i, j);
 			int idx_center_i_minus1 = 	twoDToLinearCellCenter(i - 1, j);
 			// Get the current velocity and pressure difference
-			double vel_x = _vel_x_front_buffer[idx_vel_x];
+			double vel_x = _vel_x_front_buffer(i,j);
 			double pressure_diff = x(idx_center) - x(idx_center_i_minus1);
 			// Calculate new velocity
 			double new_vel_x = vel_x + dt * 1 / density * pressure_diff / _DELTA_X;
 			// Write data
-			_vel_x_back_buffer[idx_vel_x] = new_vel_x;
+			_vel_x_back_buffer(i,j) = new_vel_x;
 		}
 	}
 	// Y vel
@@ -189,16 +170,16 @@ void MacGrid::pressureSolve(double dt)
 		for (int i = 0; i < _SIZE_X; ++i)
 		{
 			// Calculate indices
-			int idx_vel_y = 			twoDToLinearYBorders(i, j);
+			//int idx_vel_y = 			twoDToLinearYBorders(i, j);
 			int idx_center = 			twoDToLinearCellCenter(i, j);
 			int idx_center_j_minus1 = 	twoDToLinearCellCenter(i, j - 1);
 			// Get the current velocity and pressure difference
-			double vel_y = _vel_y_front_buffer[idx_vel_y];
+			double vel_y = _vel_y_front_buffer(i,j);
 			double pressure_diff = x(idx_center) - x(idx_center_j_minus1);
 			// Calculate new velocity
 			double new_vel_y = vel_y + dt * 1 / density * pressure_diff / _DELTA_Y;
 			// Write data
-			_vel_y_back_buffer[idx_vel_y] = new_vel_y;
+			_vel_y_back_buffer(i,j) = new_vel_y;
 		}
 	}
 
@@ -207,9 +188,9 @@ void MacGrid::pressureSolve(double dt)
 	{
 		for (int i = 0; i < _SIZE_X; ++i)
 		{
-			int idx = twoDToLinearCellCenter(i, j);
-			double new_color = _color_front_buffer[idx];
-			_color_back_buffer[idx] = new_color;
+			//int idx = twoDToLinearCellCenter(i, j);
+			double new_color = _color_front_buffer(i,j);
+			_color_back_buffer(i,j) = new_color;
 		}
 	}
 
@@ -247,7 +228,7 @@ void MacGrid::clearCellTypeBuffer()
 	{
 		for (int i = 0; i < _SIZE_X; ++i)
 		{
-			_cell_type_buffer[twoDToLinearCellCenter(i, j)] = AIR;
+			_cell_type_buffer(i, j) = AIR;
 		}
 	}
 }
@@ -304,9 +285,9 @@ int MacGrid::twoDToLinearCellCenter(int i, int j) const
 */
 double MacGrid::velX(int i, int j) const
 {
-	int idx = twoDToLinearXBorders(i, j);
-	int idx_i_plus1 = twoDToLinearXBorders(i + 1, j);
-	return (_vel_x_front_buffer[idx] + _vel_x_front_buffer[idx_i_plus1]) / 2;
+	//int idx = twoDToLinearXBorders(i, j);
+	//int idx_i_plus1 = twoDToLinearXBorders(i + 1, j);
+	return (_vel_x_front_buffer.value(i,j) + _vel_x_front_buffer.value(i+1,j)) / 2;
 }
 
 /**
@@ -314,9 +295,9 @@ double MacGrid::velX(int i, int j) const
 */
 double MacGrid::velY(int i, int j) const
 {
-	int idx = twoDToLinearYBorders(i, j);
-	int idx_j_plus1 = twoDToLinearYBorders(i, j + 1);
-	return (_vel_y_front_buffer[idx] + _vel_y_front_buffer[idx_j_plus1]) / 2;
+	//int idx = twoDToLinearYBorders(i, j);
+	//int idx_j_plus1 = twoDToLinearYBorders(i, j + 1);
+	return (_vel_y_front_buffer.value(i,j) + _vel_y_front_buffer.value(i,j+1)) / 2;
 }
 
 /**
@@ -324,7 +305,7 @@ double MacGrid::velY(int i, int j) const
 */
 double MacGrid::velXHalfIndexed(int i, int j) const
 {
-	return _vel_x_front_buffer[twoDToLinearXBorders(i, j)];
+	return _vel_x_front_buffer.value(i,j);
 }
 
 /**
@@ -332,12 +313,12 @@ double MacGrid::velXHalfIndexed(int i, int j) const
 */
 double MacGrid::velYHalfIndexed(int i, int j) const
 {
-	return _vel_y_front_buffer[twoDToLinearYBorders(i, j)];
+	return _vel_y_front_buffer.value(i,j);
 }
 
 double MacGrid::color(int i, int j) const
 {
-	return _color_front_buffer[twoDToLinearCellCenter(i, j)];
+	return _color_front_buffer.value(i,j);
 }
 
 /**
@@ -364,10 +345,10 @@ double MacGrid::velXInterpolated(double x, double y) const
 	j_plus1 = CLAMP(j_plus1, 0, _SIZE_Y - 1);
 	
 	// First interpolate in x, then in y
-	double v_x_00 = _vel_x_front_buffer[twoDToLinearXBorders(i, j)];
-	double v_x_10 = _vel_x_front_buffer[twoDToLinearXBorders(i_plus1, j)];
-	double v_x_01 = _vel_x_front_buffer[twoDToLinearXBorders(i, j_plus1)];
-	double v_x_11 = _vel_x_front_buffer[twoDToLinearXBorders(i_plus1, j_plus1)];
+	double v_x_00 = _vel_x_front_buffer.value(i,j);
+	double v_x_10 = _vel_x_front_buffer.value(i_plus1,j);
+	double v_x_01 = _vel_x_front_buffer.value(i,j_plus1);
+	double v_x_11 = _vel_x_front_buffer.value(i_plus1,j_plus1);
 	
 	// Interpolate x
 	double v_x_0 = (1 - i_frac) * v_x_00 + i_frac * v_x_10;
@@ -402,10 +383,10 @@ double MacGrid::velYInterpolated(double x, double y) const
 	j_plus1 = CLAMP(j_plus1, 0, _SIZE_Y + 1 - 1);
 	
 	// First interpolate in x, then in y
-	double v_y_00 = _vel_y_front_buffer[twoDToLinearYBorders(i, j)];
-	double v_y_10 = _vel_y_front_buffer[twoDToLinearYBorders(i_plus1, j)];
-	double v_y_01 = _vel_y_front_buffer[twoDToLinearYBorders(i, j_plus1)];
-	double v_y_11 = _vel_y_front_buffer[twoDToLinearYBorders(i_plus1, j_plus1)];
+	double v_y_00 = _vel_y_front_buffer.value(i, j);
+	double v_y_10 = _vel_y_front_buffer.value(i_plus1, j);
+	double v_y_01 = _vel_y_front_buffer.value(i, j_plus1);
+	double v_y_11 = _vel_y_front_buffer.value(i_plus1, j_plus1);
 	
 	// Interpolate x
 	double v_y_0 = (1 - i_frac) * v_y_00 + i_frac * v_y_10;
@@ -436,10 +417,10 @@ double MacGrid::colorInterpolated(double x, double y) const
 	j_plus1 = CLAMP(j_plus1, 0, _SIZE_Y - 1);
 	
 	// First interpolate in x, then in y
-	double color_00 = _color_front_buffer[twoDToLinearCellCenter(i, j)];
-	double color_10 = _color_front_buffer[twoDToLinearCellCenter(i_plus1, j)];
-	double color_01 = _color_front_buffer[twoDToLinearCellCenter(i, j_plus1)];
-	double color_11 = _color_front_buffer[twoDToLinearCellCenter(i_plus1, j_plus1)];
+	double color_00 = _color_front_buffer.value(i, j);
+	double color_10 = _color_front_buffer.value(i_plus1, j);
+	double color_01 = _color_front_buffer.value(i, j_plus1);
+	double color_11 = _color_front_buffer.value(i_plus1, j_plus1);
 	
 	// Interpolate x
 	double color_0 = (1 - i_frac) * color_00 + i_frac * color_10;
@@ -462,7 +443,7 @@ CellType MacGrid::cellType(int i, int j) const
 	}
 	else
 	{
-		return _cell_type_buffer[twoDToLinearCellCenter(i, j)];
+		return _cell_type_buffer.value(i, j);
 	}
 }
 
@@ -501,16 +482,16 @@ CellType MacGrid::cellTypeYHalfIndexed(int i, int j) const
 double MacGrid::divVelX(int i, int j) const
 {
 	return 
-		(_vel_x_front_buffer[twoDToLinearXBorders(i + 1, j)]
-		- _vel_x_front_buffer[twoDToLinearXBorders(i, j)])
+		(_vel_x_front_buffer.value(i + 1, j)
+		- _vel_x_front_buffer.value(i, j))
 		/ _DELTA_X;
 }
 
 double MacGrid::divVelY(int i, int j) const
 {
 	return
-		(_vel_y_front_buffer[twoDToLinearYBorders(i, j + 1)]
-		- _vel_y_front_buffer[twoDToLinearYBorders(i, j)])
+		(_vel_y_front_buffer.value(i, j + 1)
+		- _vel_y_front_buffer.value(i, j))
 		/ _DELTA_Y;
 }
 
@@ -549,24 +530,24 @@ double MacGrid::deltaY() const
 */
 void MacGrid::setVelX(int i, int j, double vel_x)
 {
-	_vel_x_front_buffer[twoDToLinearXBorders(i, j)] = vel_x;
+	_vel_x_front_buffer(i, j) = vel_x;
 }
 
 /**
 */
 void MacGrid::setVelY(int i, int j, double vel_y)
 {
-	_vel_y_front_buffer[twoDToLinearYBorders(i, j)] = vel_y;
+	_vel_y_front_buffer(i, j) = vel_y;
 }
 
 void MacGrid::setColor(int i, int j, double color)
 {
-	_color_front_buffer[twoDToLinearCellCenter(i, j)] = color;
+	_color_front_buffer(i, j) = color;
 }
 
 void MacGrid::setCellType(int i, int j, CellType cell_type)
 {
-	_cell_type_buffer[twoDToLinearCellCenter(i, j)] = cell_type;
+	_cell_type_buffer(i, j) = cell_type;
 }
 
 /**
@@ -602,10 +583,10 @@ void MacGrid::addToVelXInterpolated(double x, double y, double vel_x)
 	double v_x_11 = i_frac * v_x_1;
 
 	// Write data
-	_vel_x_back_buffer[twoDToLinearXBorders(i, j)] 				+= v_x_00;
-	_vel_x_back_buffer[twoDToLinearXBorders(i_plus1, j)] 		+= v_x_10;
-	_vel_x_back_buffer[twoDToLinearXBorders(i, j_plus1)] 		+= v_x_01;
-	_vel_x_back_buffer[twoDToLinearXBorders(i_plus1, j_plus1)] 	+= v_x_11;
+	_vel_x_back_buffer(i, j) 				+= v_x_00;
+	_vel_x_back_buffer(i_plus1, j) 			+= v_x_10;
+	_vel_x_back_buffer(i, j_plus1) 			+= v_x_01;
+	_vel_x_back_buffer(i_plus1, j_plus1)	+= v_x_11;
 }
 
 /**
@@ -641,10 +622,10 @@ void MacGrid::addToVelYInterpolated(double x, double y, double vel_y)
 	double v_y_11 = i_frac * v_y_1;
 
 	// Write data
-	_vel_y_back_buffer[twoDToLinearYBorders(i, j)] 				+= v_y_00;
-	_vel_y_back_buffer[twoDToLinearYBorders(i_plus1, j)] 		+= v_y_10;
-	_vel_y_back_buffer[twoDToLinearYBorders(i, j_plus1)] 		+= v_y_01;
-	_vel_y_back_buffer[twoDToLinearYBorders(i_plus1, j_plus1)] 	+= v_y_11;
+	_vel_y_back_buffer(i, j) 				+= v_y_00;
+	_vel_y_back_buffer(i_plus1, j) 			+= v_y_10;
+	_vel_y_back_buffer(i, j_plus1) 			+= v_y_01;
+	_vel_y_back_buffer(i_plus1, j_plus1) 	+= v_y_11;
 }
 
 /**
@@ -680,10 +661,10 @@ void MacGrid::addToColorInterpolated(double x, double y, double color)
 	double color_11 = i_frac * color_1;
 	
 	// Write data
-	_color_back_buffer[twoDToLinearCellCenter(i, j)] 				+= color_00;
-	_color_back_buffer[twoDToLinearCellCenter(i_plus1, j)] 			+= color_10;
-	_color_back_buffer[twoDToLinearCellCenter(i, j_plus1)] 			+= color_01;
-	_color_back_buffer[twoDToLinearCellCenter(i_plus1, j_plus1)] 	+= color_11;
+	_color_back_buffer(i, j) 				+= color_00;
+	_color_back_buffer(i_plus1, j) 			+= color_10;
+	_color_back_buffer(i, j_plus1) 			+= color_01;
+	_color_back_buffer(i_plus1, j_plus1) 	+= color_11;
 }
 
 
@@ -695,7 +676,7 @@ void MacGrid::_advectVelX(double dt)
 		for (int i = 0; i < _SIZE_X + 1; ++i)
 		{
 			// Write data
-			_vel_x_back_buffer[twoDToLinearXBorders(i, j)] = 0;
+			_vel_x_back_buffer(i, j) = 0;
 		}
 	}
 	for (int j = 0; j < _SIZE_Y; ++j)
@@ -776,7 +757,7 @@ void MacGrid::_advectVelY(double dt)
 		for (int i = 0; i < _SIZE_X; ++i)
 		{
 			// Write data
-			_vel_y_back_buffer[twoDToLinearYBorders(i, j)] = 0;
+			_vel_y_back_buffer(i, j) = 0;
 		}
 	}
 	for (int j = 0; j < _SIZE_Y + 1; ++j)
@@ -856,7 +837,7 @@ void MacGrid::_advectColor(double dt)
 		for (int i = 0; i < _SIZE_X; ++i)
 		{
 			// Write data
-			_color_back_buffer[twoDToLinearCellCenter(i, j)] = 0;
+			_color_back_buffer(i, j) = 0;
 		}
 	}
 	for (int j = 0; j < _SIZE_Y; ++j)
@@ -887,9 +868,9 @@ void MacGrid::_advectColor(double dt)
 
 void MacGrid::_swapBuffers()
 {
-	std::vector<double> vel_x_tmp = std::move(_vel_x_front_buffer);
-	std::vector<double> vel_y_tmp = std::move(_vel_y_front_buffer);
-	std::vector<double> color_tmp = std::move(_color_front_buffer);
+	Grid<double> vel_x_tmp = std::move(_vel_x_front_buffer);
+	Grid<double> vel_y_tmp = std::move(_vel_y_front_buffer);
+	Grid<double> color_tmp = std::move(_color_front_buffer);
 
 	_vel_x_front_buffer = std::move(_vel_x_back_buffer);
 	_vel_y_front_buffer = std::move(_vel_y_back_buffer);

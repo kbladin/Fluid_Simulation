@@ -1,6 +1,7 @@
 #include <Simulator.h>
 #include <MacGrid.h>
 #include <Canvas.h>
+#include <Grid.h>
 
 using namespace std;
 

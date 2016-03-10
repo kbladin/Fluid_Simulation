@@ -2,7 +2,9 @@
 
 Color::Color()
 {
-
+	r = 1;
+	g = 1;
+	b = 1;
 }
 
 Color::Color(float red, float green, float blue)
@@ -21,21 +23,9 @@ Canvas::Canvas(int width, int height) :
 	_WIDTH(width),
 	_HEIGHT(height),
 	_line_color(0,0,0),
-	_fill_color(1,1,1)
+	_fill_color(1,1,1),
+	_pixel_data(width, height)
 {
-	// Allocate data
-	_pixel_data.resize(_WIDTH * _HEIGHT);
-
-	// Reset data
-	for (int j = 0; j < _HEIGHT; ++j)
-	{
-		for (int i = 0; i < _WIDTH; ++i)
-		{
-			Color c;
-			c.r = c.g = c.b = 1;
-			_pixel_data[i + j * _WIDTH] = c;
-		}
-	}
 }
 
 Canvas::~Canvas()
@@ -61,7 +51,7 @@ void Canvas::drawLine(int from_x, int from_y, int to_x, int to_y)
 		}
 		else
 		{
-			_pixel_data[x_idx + y_idx * _WIDTH] = _line_color;
+			_pixel_data(x_idx, y_idx) = _line_color;
 		}
 	}
 }
@@ -92,11 +82,11 @@ void Canvas::fillRectangle(int min_x, int min_y, int max_x, int max_y)
 				if (i == min_x || i == max_x ||
 					j == min_y || j == max_y)
 				{ // On border, use line color
-					_pixel_data[i + j * _WIDTH] = _line_color;
+					_pixel_data(i, j) = _line_color;
 				}
 				else 
 				{ // Inside, use fill color
-					_pixel_data[i + j * _WIDTH] = _fill_color;
+					_pixel_data(i, j) = _fill_color;
 				}
 			}
 		}
@@ -108,7 +98,7 @@ void Canvas::setPixel(int i, int j, Color c)
 	if (i >= 0 && i < _WIDTH &&
 		j >= 0 && j < _HEIGHT)
 	{
-		_pixel_data[i + j * _WIDTH] = c;
+		_pixel_data(i, j) = c;
 	}
 }
 
@@ -118,7 +108,7 @@ void Canvas::fill(Color c)
 	{
 		for (int i = 0; i < _WIDTH; ++i)
 		{
-			_pixel_data[i + j * _WIDTH] = c;
+			_pixel_data(i, j) = c;
 		}
 	}
 }
@@ -146,7 +136,7 @@ int Canvas::height()
 
 Color Canvas::pixel(int i, int j)
 {
-	return _pixel_data[i + j * _WIDTH];
+	return _pixel_data(i, j);
 }
 
 // Setters

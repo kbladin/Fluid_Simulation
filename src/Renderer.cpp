@@ -9,12 +9,12 @@ Renderer::Renderer(double x_min, double y_min, double x_max, double y_max)
 	_x_max = x_max;
 	_y_max = y_max;
 
-	_canvas = new Canvas(400, 400);
+	_canvas = std::unique_ptr<Canvas>(new Canvas(400, 400));
 }
 
 Renderer::~Renderer()
 {
-	delete _canvas;
+	
 }
 
 void Renderer::clearCanvas()
