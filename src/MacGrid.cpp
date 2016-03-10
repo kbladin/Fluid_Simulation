@@ -246,32 +246,10 @@ void MacGrid::cellToWorld(int i, int j, double* x, double* y) const
 	*y = j * _DELTA_Y;
 }
 
-void MacGrid::linearTo2DXBorders(int idx, int* i, int* j) const
-{
-	*i = idx % (_SIZE_X + 1);
-	*j = idx / (_SIZE_X + 1);
-}
-
-void MacGrid::linearTo2DYBorders(int idx, int* i, int* j) const
-{
-	*i = idx % _SIZE_X;
-	*j = idx / _SIZE_X;
-}
-
 void MacGrid::linearTo2DCellCenter(int idx, int* i, int* j) const
 {
 	*i = idx % _SIZE_X;
 	*j = idx / _SIZE_X;
-}
-
-int MacGrid::twoDToLinearXBorders(int i, int j) const
-{
-	return i + j * (_SIZE_X + 1);
-}
-
-int MacGrid::twoDToLinearYBorders(int i, int j) const
-{
-	return i + j * _SIZE_X;
 }
 
 int MacGrid::twoDToLinearCellCenter(int i, int j) const

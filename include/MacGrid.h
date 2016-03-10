@@ -38,11 +38,7 @@ public:
 	// Index transforms
 	void worldToCell(double x, double y, int* i, int* j) const;
 	void cellToWorld(int i, int j, double* x, double* y) const;
-	void linearTo2DXBorders(int idx, int* i, int* j) const;
-	void linearTo2DYBorders(int idx, int* i, int* j) const;
 	void linearTo2DCellCenter(int idx, int* i, int* j) const;
-	int twoDToLinearXBorders(int i, int j) const;
-	int twoDToLinearYBorders(int i, int j) const;
 	int twoDToLinearCellCenter(int i, int j) const;
 
 	// Getters

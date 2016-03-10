@@ -7,17 +7,20 @@ template <class T>
 class Grid
 {
 public:
+	// Constructors / Destructor
 	Grid(int size_x, int size_y);
 	~Grid();
 	Grid(Grid&& rhv);
 	Grid<T>& operator=(Grid<T> to_copy);
-
+	
+	// Transform
 	void linearTo2D(int idx, int* i, int* j) const;
 	int twoDToLinear(int i, int j) const;
 
+	// Get
 	T value(int i, int j) const;
 
-	void setValue(int i, int j, T val);
+	// Set
 	T& operator()(int i, int j);
 
 private:
@@ -25,6 +28,7 @@ private:
 	const int _SIZE_X;
 	const int _SIZE_Y;
 
+	// Data
 	std::vector<T> data;
 };
 
@@ -74,6 +78,10 @@ int Grid<T>::twoDToLinear(int i, int j) const
 	return i + j * _SIZE_X;
 }
 
+/**
+	Does not consider border cases for efficiency. That needs to be handled
+	outside this function.
+*/
 template <class T>
 T Grid<T>::value(int i, int j) const
 {
