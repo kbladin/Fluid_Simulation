@@ -18,7 +18,7 @@ public:
 	void renderGridVelocitiesToCanvas(const MacGrid* grid);
 	void renderGridCellsToCanvas(const MacGrid* grid);
 	void renderLevelSetFunctionValuesToCanvas(const LevelSet* level_set);
-	void renderColorToCanvas(const MacGrid* grid);
+	//void renderColorToCanvas(const MacGrid* grid);
 	void renderParticlesToCanvas(const MarkerParticleSet* particle_set);
 
 	void writeCanvasToPpm( const char* file_path);

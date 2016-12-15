@@ -13,7 +13,6 @@ public:
 	// Constructors / Destructor
 	Grid(int size_x, int size_y);
 	~Grid();
-	//Grid(Grid&& rhv);
 	Grid<T>& operator=(Grid<T> to_copy);
 	
 	// Transform
@@ -44,7 +43,6 @@ public:
 	// Constructors / Destructor
 	SizedGrid(int size_x, int size_y, double delta_x, double delta_y);
 	~SizedGrid();
-	//SizedGrid(SizedGrid&& rhv);	
 	SizedGrid<T>& operator=(SizedGrid<T> to_copy);
 
 	// Get
@@ -79,16 +77,8 @@ template <class T>
 Grid<T>::~Grid()
 {
 
-} 
-/*
-template <class T>
-Grid<T>::Grid(Grid&& rhv) :
-	_SIZE_X(rhv._SIZE_X),
-	_SIZE_Y(rhv._SIZE_Y)
-{
-	data = std::move(rhv.data);
 }
-*/
+
 template <class T>
 Grid<T>& Grid<T>::operator=(Grid<T> to_copy)
 {
@@ -149,16 +139,8 @@ template <class T>
 SizedGrid<T>::~SizedGrid()
 {
 
-} 
-/*
-template <class T>
-SizedGrid<T>::SizedGrid(SizedGrid&& rhv) :
-	Grid<T>(std::move(rhv)),
-	_DELTA_X(rhv._DELTA_X),
-	_DELTA_Y(rhv._DELTA_Y)
-{
 }
-*/
+
 template <class T>
 SizedGrid<T>& SizedGrid<T>::operator=(SizedGrid<T> to_copy)
 {
@@ -169,16 +151,16 @@ SizedGrid<T>& SizedGrid<T>::operator=(SizedGrid<T> to_copy)
 template <class T>
 T SizedGrid<T>::valueInterpolated(double x, double y) const
 {
-		// Calculate indices
+	// Calculate indices
 	int i = x / this->_DELTA_X;
-	int j = y / this->_DELTA_Y; // -0.5 Due to the MAC grid structure
+	int j = y / this->_DELTA_Y;
 	int i_plus1 = i + 1;
 	int j_plus1 = j + 1;
 	double i_frac = x / this->_DELTA_X - i;
 	double j_frac = y / this->_DELTA_Y - j;
 
 	assert(i_frac <= 1);
-	assert(j_frac <= 1);
+	assert(j_frac <= 1); 
 
 	// Border cases
 	i = CLAMP(i, 0, this->_SIZE_X - 1);
@@ -220,7 +202,7 @@ template <class T>
 void SizedGrid<T>::addToValueInterpolated(double x, double y, T value)
 {
 	// Calculate indices
-	int i = x / _DELTA_X; // -0.5 Due to the MAC grid structure
+	int i = x / _DELTA_X;
 	int j = y / _DELTA_Y;
 	int i_plus1 = i + 1;
 	int j_plus1 = j + 1;

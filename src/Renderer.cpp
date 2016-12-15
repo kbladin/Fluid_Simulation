@@ -94,7 +94,7 @@ void Renderer::renderLevelSetFunctionValuesToCanvas(const LevelSet* level_set)
 	}
 }
 
-
+/*
 void Renderer::renderColorToCanvas(const MacGrid* grid)
 {
 	double scale_x = _canvas->width() / (_x_max - _x_min);
@@ -123,7 +123,7 @@ void Renderer::renderColorToCanvas(const MacGrid* grid)
 		}
 	}
 }
-
+*/
 void Renderer::renderGridVelocitiesToCanvas(const MacGrid* grid)
 {
 	int grid_size_x = grid->sizeX();
@@ -178,7 +178,7 @@ void Renderer::renderParticlesToCanvas(const MarkerParticleSet* particle_set)
 		int pos_x = - translate_x + scale_x * it->posX();
 		int pos_y = - translate_y + scale_y * it->posY();
 		
-		_canvas->drawPoint(pos_x, pos_y, 6);
+		_canvas->drawPoint(pos_x, pos_y, 2);
 	}
 }
 

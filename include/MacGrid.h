@@ -21,14 +21,12 @@ enum CellType
 template class Grid<double>;
 template class Grid<CellType>;
 
-//! Let this have dense arrays for now
 class MacGrid
 {
 public:
 	MacGrid(int size_x, int size_y, double length_x, double length_y);
 	~MacGrid();
 
-	// Simple semi Lagrangian advection with Euler integration
 	void advect(double dt);
 	void addExternalForce(double dt, double F_x, double F_y);
 	void pressureSolve(double dt);
@@ -47,10 +45,10 @@ public:
 	double velY(int i, int j) const;
 	double velXHalfIndexed(int i, int j) const;
 	double velYHalfIndexed(int i, int j) const;
-	double color(int i, int j) const;
+	double velXBackBufferHalfIndexed(int i, int j) const;
+	double velYBackBufferHalfIndexed(int i, int j) const;
 	double velXInterpolated(double x, double y) const;
 	double velYInterpolated(double x, double y) const;
-	double colorInterpolated(double x, double y) const;
 	double divVelX(int i, int j) const;
 	double divVelY(int i, int j) const;
 	glm::dmat2 computeVelocityGradientMatrix(int i, int j);
@@ -61,19 +59,19 @@ public:
 	double deltaX() const;
 	double deltaY() const;
 	CellType cellType(int i, int j) const;
-	CellType cellTypeXHalfIndexed(int i, int j) const;
-	CellType cellTypeYHalfIndexed(int i, int j) const;
 	
 	// Setters
 	void setVelX(int i, int j, double vel_x);
 	void setVelY(int i, int j, double vel_y);
-	void setColor(int i, int j, double color);
+	void setVelXBackBuffer(int i, int j, double vel_x);
+	void setVelYBackBuffer(int i, int j, double vel_y);
+	void setVelXBackBufferHalfIndexed(int i, int j, double vel_x);
+	void setVelYBackBufferHalfIndexed(int i, int j, double vel_y);
 	void setCellType(int i, int j, CellType cell_type);
 	void addToVelXInterpolated(double x, double y, double vel_x);
 	void addToVelYInterpolated(double x, double y, double vel_y);
-	void addToColorInterpolated(double x, double y, double color);
-
-	void _swapBuffers();
+	
+	void swapBuffers();
 
 private:
 
@@ -91,8 +89,7 @@ private:
 		double* y);
 	void _advectVelX(double dt);
 	void _advectVelY(double dt);
-	void _advectColor(double dt);
-
+	
 	// Constants
 	const int _SIZE_X;
 	const int _SIZE_Y;
@@ -102,17 +99,16 @@ private:
 	const double _DELTA_Y;
 
 	// Always render to back bufer from front buffer, then swap them
-	// Since advection can not be done in place, another set of data is needed
+	// since advection can not be done in place, another set of data is needed
 	// (except for when adding forces)
 	SizedGrid<double> _vel_x_front_buffer;
 	SizedGrid<double> _vel_y_front_buffer;
-	SizedGrid<double> _color_front_buffer;
-	
+
 	SizedGrid<double> _vel_x_back_buffer;
 	SizedGrid<double> _vel_y_back_buffer;
-	SizedGrid<double> _color_back_buffer;
 
 	Grid<CellType> _cell_type_buffer;
+	Grid<int> _fluid_indices;
 
 	// Sparse matrix for CG solve
     Eigen::SparseMatrix<double> A;
