@@ -15,15 +15,14 @@ public:
 	~Renderer();
 
 	void clearCanvas();
-	void renderGridVelocitiesToCanvas(const MacGrid* grid);
-	void renderGridCellsToCanvas(const MacGrid* grid);
-	void renderLevelSetFunctionValuesToCanvas(const LevelSet* level_set);
-	//void renderColorToCanvas(const MacGrid* grid);
-	void renderParticlesToCanvas(const MarkerParticleSet* particle_set);
+	void renderGridVelocitiesToCanvas(const MacGrid& grid);
+	void renderGridCellsToCanvas(const MacGrid& grid);
+	void renderLevelSetFunctionValuesToCanvas(const LevelSet& level_set);
+	void renderParticlesToCanvas(const MarkerParticleSet& particle_set);
 
 	void writeCanvasToPpm( const char* file_path);
 private:
-	std::unique_ptr<Canvas> _canvas;
+	Canvas _canvas;
 
 	// World coordinates, defines a quad to render
 	double _x_min;
