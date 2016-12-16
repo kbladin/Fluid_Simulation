@@ -1,10 +1,8 @@
 #include <FluidSolver.h>
 
-static const int N_PARTICLES = 10000;
-
 FluidSolver::FluidSolver()
 {
-	_cg_solver.setMaxIterations(5);
+	_cg_solver.setMaxIterations(10);
 }
 
 FluidSolver::~FluidSolver()
@@ -19,7 +17,7 @@ void FluidSolver::step(FluidDomain& fluid_domain, double dt)
 	// Solve boundary condition
 	enforceDirichlet(fluid_domain.macGrid());
 	// Ensure divergence free
-	pressureSolve(fluid_domain.macGrid(), dt);
+	pressureSolve(fluid_domain.macGrid(), fluid_domain.markerParticleSet(), dt);
 	// Solve boundary condition again due to numerical errors in previous step
 	enforceDirichlet(fluid_domain.macGrid());
 	// Extend velocities outside of liquid cells so that liquid can flow
@@ -47,10 +45,12 @@ void FluidSolver::enforceDirichlet(MacGrid& mac_grid)
 }
 
 
-void FluidSolver::pressureSolve(MacGrid& mac_grid, double dt)
+void FluidSolver::pressureSolve(MacGrid& mac_grid, MarkerParticleSet& particle_set, double dt)
 {
 	// Find which cells are liquid by using a grid with indices
 	Grid<int> fluid_indices(mac_grid.sizeX(), mac_grid.sizeY());
+	Grid<int> n_particles(mac_grid.sizeX(), mac_grid.sizeY());
+
 	int n_fluid_cells = 0;
 	for (int j = 0; j < mac_grid.sizeY(); ++j)
 	{
@@ -66,6 +66,16 @@ void FluidSolver::pressureSolve(MacGrid& mac_grid, double dt)
 				fluid_indices(i,j) = -1;
 			}
 		}
+	}
+
+	// Loop through all particles
+	for (auto it = particle_set.begin(); it != particle_set.end(); it++)
+	{
+		// Find the particles indices in the grid
+		int x = (it->posX() / mac_grid.lengthX()) * mac_grid.sizeX();
+		int y = (it->posY() / mac_grid.lengthY()) * mac_grid.sizeY();
+
+		n_particles(x, y)++;
 	}
 
 	// Allocate matrix in which to store connectivity information
@@ -135,44 +145,29 @@ void FluidSolver::pressureSolve(MacGrid& mac_grid, double dt)
 			
 			if (idx > 0)
 			{
-				double p = x(idx); // Pressure
-				// X dimension
-				if (idx_i_minus1 > 0)
-				{
-					// When looking at x velocities at the borders of the cells,
-					// the pressure 'p' is to the right and p_i_minus1 is to
-					// the left of the border
-					double p_i_minus1 = idx_i_minus1 > 0 ? x(idx_i_minus1) : 0;
+				// UGLY SOLUTION TO VOLUME LOSS HERE!!
+				// MAKE PRESSURE PROPORTIONAL TO NUMBER OF PARTICLES
+				double k = 0.2;
 
-					// Get Pressure difference in x and y dimension
-					double pressure_diff_x = p - p_i_minus1;
-					
-					// Current velocities
-					double vel_x = mac_grid.velXHalfIndexed(i,j);
-					
-					// Calculate new velocity
-					double new_vel_x = vel_x + dt * 1 / density * pressure_diff_x * mac_grid.deltaX();
-					// Write data
-					mac_grid.setVelXBackBufferHalfIndexed(i, j, new_vel_x);	
-				}
-				// Y dimension
-				if (idx_j_minus1 > 0)
-				{
-					// When looking at y velocities at the borders of the cells,
-					// the pressure 'p' above and p_i_minus1 is below the border
-					double p_j_minus1 = idx_j_minus1 > 0 ? x(idx_j_minus1) : 0;
+				double p = x(idx) - k * n_particles(i,j); // Pressure
 
-					// Get Pressure difference in x and y dimension
-					double pressure_diff_y = p - p_j_minus1;
+				double p_i_minus1 = idx_i_minus1 > 0 ? x(idx_i_minus1) - k * n_particles(i-1,j) : 0;
+				double p_j_minus1 = idx_j_minus1 > 0 ? x(idx_j_minus1) - k * n_particles(i,j-1) : 0;
 
-					// Current velocities
-					double vel_y = mac_grid.velYHalfIndexed(i,j);
+				// Get Pressure difference in x and y dimension
+				double pressure_diff_x = p - p_i_minus1;
+				double pressure_diff_y = p - p_j_minus1;
 
-					// Calculate new velocity
-					double new_vel_y = vel_y + dt * 1 / density * pressure_diff_y * mac_grid.deltaY();
-					// Write data
-					mac_grid.setVelYBackBufferHalfIndexed(i, j, new_vel_y);	
-				}
+				// Current velocities
+				double vel_x = mac_grid.velXHalfIndexed(i,j);
+				double vel_y = mac_grid.velYHalfIndexed(i,j);
+
+				// Calculate new velocity
+				double new_vel_x = vel_x + dt * 1 / density * pressure_diff_x * mac_grid.deltaX();
+				double new_vel_y = vel_y + dt * 1 / density * pressure_diff_y * mac_grid.deltaY();
+				// Write data
+				mac_grid.setVelXBackBufferHalfIndexed(i, j, new_vel_x);	
+				mac_grid.setVelYBackBufferHalfIndexed(i, j, new_vel_y);
 			}
 		}
 	}
@@ -198,7 +193,7 @@ void FluidSolver::extendVelocity(MacGrid& mac_grid)
         }
     }
 
-    int iterations = 5;
+    int iterations = 20;
     for (int iter = 0; iter < iterations; ++iter)
     {
         for (int j = 0; j < mac_grid.sizeY(); ++j)
@@ -214,26 +209,26 @@ void FluidSolver::extendVelocity(MacGrid& mac_grid)
 	            	// Get values of all neighbors
 	            	if(valid_mask.value(i-1, j) == 1)
 	            	{
-	            		new_vel_x += mac_grid.velX(i-1, j);
-	            		new_vel_y += mac_grid.velY(i-1, j);
+	            		new_vel_x += mac_grid.velXHalfIndexed(i-1, j);
+	            		new_vel_y += mac_grid.velYHalfIndexed(i-1, j);
 	            		n_valid_neighbors++;
 	            	}
 	            	if(valid_mask.value(i+1, j) == 1)
 	            	{
-	            		new_vel_x += mac_grid.velX(i+1, j);
-	            		new_vel_y += mac_grid.velY(i+1, j);
+	            		new_vel_x += mac_grid.velXHalfIndexed(i+1, j);
+	            		new_vel_y += mac_grid.velYHalfIndexed(i+1, j);
 	            		n_valid_neighbors++;
 	            	}
 	            	if(valid_mask.value(i, j-1) == 1)
 	            	{
-	            		new_vel_x += mac_grid.velX(i, j-1);
-	            		new_vel_y += mac_grid.velY(i, j-1);
+	            		new_vel_x += mac_grid.velXHalfIndexed(i, j-1);
+	            		new_vel_y += mac_grid.velYHalfIndexed(i, j-1);
 	            		n_valid_neighbors++;
 	            	}
 	            	if(valid_mask.value(i, j+1) == 1)
 	            	{
-	            		new_vel_x += mac_grid.velX(i, j+1);
-	            		new_vel_y += mac_grid.velY(i, j+1);
+	            		new_vel_x += mac_grid.velXHalfIndexed(i, j+1);
+	            		new_vel_y += mac_grid.velYHalfIndexed(i, j+1);
 	            		n_valid_neighbors++;
 	            	}
 

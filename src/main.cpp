@@ -17,7 +17,7 @@ int main(int argc, char const *argv[])
 
 	// Setup
 	int n_frames = 100;
-	double seconds_per_frame = 0.2;
+	double seconds_per_frame = 0.5;
 
 	// Classify the cells of the domain (AIR, LIQUID or SOLID)
 	fluid_domain.classifyCells(fluid_domain.markerParticleSet());
@@ -33,9 +33,10 @@ int main(int argc, char const *argv[])
 		for (double frame_time = 0; frame_time < seconds_per_frame; frame_time += dt)
 		{
 			// Calculate dt (for now just set it)
-			dt = 0.01;
+			dt = 0.05;
 			
 			// Update
+            //if (i < 10)
 			fluid_domain.addExternalForce(0, 10, dt);
 
 			// Solve
@@ -53,7 +54,7 @@ int main(int argc, char const *argv[])
 		// Render
 		renderer.clearCanvas();
 		renderer.renderGridCellsToCanvas(fluid_domain.macGrid());
-		renderer.renderGridVelocitiesToCanvas(fluid_domain.macGrid());
+		//renderer.renderGridVelocitiesToCanvas(fluid_domain.macGrid());
 		//renderer.renderParticlesToCanvas(fluid_domain.markerParticleSet());
 		
 		std::stringstream file_name;

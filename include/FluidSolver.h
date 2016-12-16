@@ -16,7 +16,7 @@ public:
 	void step(FluidDomain& fluid_domain, double dt);
 private:
 	void enforceDirichlet(MacGrid& mac_grid);
-	void pressureSolve(MacGrid& mac_grid, double dt);
+	void pressureSolve(MacGrid& mac_grid, MarkerParticleSet& particle_set, double dt);
 	void extendVelocity(MacGrid& mac_grid);
 
 	void advectVelocity(MacGrid& mac_grid, double dt);

@@ -3,7 +3,7 @@
 #include <iostream>
 #include <random>
 
-static const int N_PARTICLES = 10000;
+static const int N_PARTICLES = 20000;
 
 FluidDomain::FluidDomain(int size_x, int size_y, double length_x, double length_y)
 	: _mac_grid(size_x, size_y, length_x, length_y)
@@ -14,8 +14,8 @@ FluidDomain::FluidDomain(int size_x, int size_y, double length_x, double length_
 	for (auto it = _particle_set.begin(); it != _particle_set.end(); it++)
 	{
 		it->setPosition(
-			(rand() / double(INT_MAX) / 2 + 0.25) * size_x,
-			(rand() / double(INT_MAX) / 2 + 0.25) * size_y);
+			(rand() / double(INT_MAX) / 2 ) * size_x,
+			(rand() / double(INT_MAX) ) * size_y);
 	}
 }
 
@@ -89,8 +89,8 @@ void FluidDomain::advectLevelSet(double dt)
 	{
 		for (int i = 0; i < _level_set.sizeY(); ++i)
 		{
-			double vel_x = _mac_grid.velX(i, j);
-			double vel_y = _mac_grid.velY(i, j);
+            double vel_x = _mac_grid.velX(i, j);
+            double vel_y = _mac_grid.velY(i, j);
 			double grad_x = _level_set.computeUpwindGradientX(i, j, vel_x);
 			double grad_y = _level_set.computeUpwindGradientY(i, j, vel_y);
 

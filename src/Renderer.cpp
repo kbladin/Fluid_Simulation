@@ -114,8 +114,8 @@ void Renderer::renderGridVelocitiesToCanvas(const MacGrid& grid)
 	{
 		for (int i = 0; i < grid_size_x; ++i)
 		{
-			double vel_x = grid.velX(i, j);
-			double vel_y = grid.velY(i, j);
+            double vel_x = grid.velX(i, j);
+            double vel_y = grid.velY(i, j);
 			double vel_norm = sqrt(vel_x * vel_x + vel_y * vel_y);
 			// Since we draw from the center of each cell, add 0.5
 			int from_x = - translate_x + (0.5 + i) * cell_size_x;
