@@ -4,17 +4,21 @@
 * Staggered MAC Grid
 * Bilinear interpolation for velocity advection
 * Runge Kutta solver
-* Pressure solve (using the linear algebra library "Eigen")
+* Pressure solve (using the conjugate gradient method with the linear algebra library "Eigen")
 * Enforce Dirichlet boundary condition
+* Marker particles for air/fluid separation
+* Velocity extension
 
-Example simulation:
+Example simulations:
 
 ![](images/fluid.gif "Fluid Simulation")
 
+![](images/fluid.gif "Water Simulation")
+
 ## Not Yet Implemented
 * Adaptive time steps
-* Other interpolation alternatives
-* Level set to separate fluid from air
-* Velocity extension for level set
+* Vorticity confinement
+* Other interpolation alternatives (quadratic, cubic, Catmull Rom)
+* Level set method for air/fluid separation
 * 3D simulation
 * Sophisticated rendering
