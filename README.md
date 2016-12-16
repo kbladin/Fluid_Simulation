@@ -13,7 +13,7 @@ Example simulations:
 
 ![](images/fluid.gif "Fluid Simulation")
 
-![](images/fluid.gif "Water Simulation")
+![](images/water.gif "Water Simulation")
 
 ## Not Yet Implemented
 * Adaptive time steps
