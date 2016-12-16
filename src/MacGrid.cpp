@@ -98,6 +98,22 @@ double MacGrid::velXHalfIndexed(int i, int j) const
 /**
 	Returns u[x][y - 1/2], velocities are stored in the borders of the cells.
 */
+double MacGrid::velYBackBufferHalfIndexed(int i, int j) const
+{
+	return _vel_y_back_buffer.value(i,j);
+}
+
+/**
+	Returns u[x - 1/2][y], velocities are stored in the borders of the cells.
+*/
+double MacGrid::velXBackBufferHalfIndexed(int i, int j) const
+{
+	return _vel_x_back_buffer.value(i,j);
+}
+
+/**
+	Returns u[x][y - 1/2], velocities are stored in the borders of the cells.
+*/
 double MacGrid::velYHalfIndexed(int i, int j) const
 {
 	return _vel_y_front_buffer.value(i,j);
@@ -233,8 +249,6 @@ void MacGrid::setVelXBackBuffer(int i, int j, double vel_x)
 	_vel_x_back_buffer(i + 1, j) = vel_x;
 }
 
-/**
-*/
 void MacGrid::setVelYBackBuffer(int i, int j, double vel_y)
 {
 	_vel_y_back_buffer(i, j) = vel_y;

@@ -38,11 +38,11 @@ public:
 	void setFillColor(Color c);
 
 private:
-	Color _line_color;
+    const int _WIDTH;
+    const int _HEIGHT;
+    Color _line_color;
 	Color _fill_color;
 	Grid<Color> _pixel_data;
-	const int _WIDTH;
-	const int _HEIGHT;
 };
 
 #endif

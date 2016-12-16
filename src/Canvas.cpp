@@ -1,5 +1,7 @@
 #include <Canvas.h>
 
+#define CLAMP(x, low, high) x < low ? low : (x > high ? high : x)
+
 Color::Color()
 {
 	r = 1;
@@ -47,7 +49,7 @@ void Canvas::drawLine(int from_x, int from_y, int to_x, int to_y)
 		if (x_idx < 0 || x_idx >= _WIDTH ||
 			y_idx < 0 || y_idx >= _HEIGHT)
 		{
-			continue;
+			break;
 		}
 		else
 		{
@@ -68,27 +70,23 @@ void Canvas::drawPoint(int pos_x, int pos_y, int size)
 
 void Canvas::fillRectangle(int min_x, int min_y, int max_x, int max_y)
 {
-	for (int j = min_y; j <= max_y; ++j)
+    min_x = CLAMP(min_x, 0, _WIDTH - 1);
+    max_x = CLAMP(max_x, 0, _WIDTH - 1);
+    min_y = CLAMP(min_y, 0, _HEIGHT - 1);
+    max_y = CLAMP(max_y, 0, _HEIGHT - 1);
+    for (int j = min_y; j <= max_y; ++j)
 	{
 		for (int i = min_x; i <= max_x; ++i)
 		{
-			if (i < 0 || i >= _WIDTH ||
-				j < 0 || j >= _HEIGHT)
-			{
-				continue;
-			}
-			else
-			{
-				if (i == min_x || i == max_x ||
-					j == min_y || j == max_y)
-				{ // On border, use line color
-					_pixel_data(i, j) = _line_color;
-				}
-				else 
-				{ // Inside, use fill color
-					_pixel_data(i, j) = _fill_color;
-				}
-			}
+            if (i == min_x || i == max_x ||
+                j == min_y || j == max_y)
+            { // On border, use line color
+                _pixel_data(i, j) = _line_color;
+            }
+            else
+            { // Inside, use fill color
+                _pixel_data(i, j) = _fill_color;
+            }
 		}
 	}
 }

@@ -13,9 +13,10 @@ FluidDomain::FluidDomain(int size_x, int size_y, double length_x, double length_
 	// Set positions for all N_PARTICLES particles
 	for (auto it = _particle_set.begin(); it != _particle_set.end(); it++)
 	{
+		//it->setPosition(0.5 * size_x, 0.5 * size_y);
 		it->setPosition(
-			(rand() / double(INT_MAX) / 2 ) * size_x,
-			(rand() / double(INT_MAX) ) * size_y);
+			(rand() / double(INT_MAX) / 2 ) * length_x,
+			(rand() / double(INT_MAX) ) * length_y);
 	}
 }
 

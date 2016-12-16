@@ -1,6 +1,6 @@
 #include <Renderer.h>
 
-#define CLAMP(x, low, high) x < low ? low : (x > high ? high : x)
+#define CLAMP(x, low, high) (x < low ? low : (x > high ? high : x))
 
 Renderer::Renderer(double x_min, double y_min, double x_max, double y_max)
 	: _canvas(400, 400)
@@ -116,14 +116,24 @@ void Renderer::renderGridVelocitiesToCanvas(const MacGrid& grid)
 		{
             double vel_x = grid.velX(i, j);
             double vel_y = grid.velY(i, j);
-			double vel_norm = sqrt(vel_x * vel_x + vel_y * vel_y);
 			// Since we draw from the center of each cell, add 0.5
 			int from_x = - translate_x + (0.5 + i) * cell_size_x;
 			int from_y = - translate_y + (0.5 + j) * cell_size_y;
 			int to_x = from_x + vel_x * line_scale;
 			int to_y = from_y + vel_y * line_scale;
 
-			_canvas.setLineColor(Color(vel_x / vel_norm, vel_y / vel_norm,0));
+			// The hue should change with the speed
+			float length_in_pixels = sqrt(
+				(from_x - to_x) * (from_x - to_x) +
+				(from_y - to_y) * (from_y - to_y));
+
+			float length_scaled = length_in_pixels / (_canvas.width() / 3);
+
+			double blue = CLAMP(1 - length_scaled, 0 , 1);
+			double green = (CLAMP(length_scaled, 0 , 1) - CLAMP(length_scaled - 1, 0 , 1));
+			double red = CLAMP(length_scaled - 1, 0 , 1);
+	
+			_canvas.setLineColor(Color(red, green, blue));
 
 			_canvas.drawLine(from_x, from_y, to_x, to_y);
 		}
@@ -147,7 +157,7 @@ void Renderer::renderParticlesToCanvas(const MarkerParticleSet& particle_set)
 		int pos_x = - translate_x + scale_x * it->posX();
 		int pos_y = - translate_y + scale_y * it->posY();
 		
-		_canvas.drawPoint(pos_x, pos_y, 2);
+		_canvas.drawPoint(pos_x, pos_y, 1);
 	}
 }
 

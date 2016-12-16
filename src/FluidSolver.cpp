@@ -23,14 +23,14 @@ void FluidSolver::step(FluidDomain& fluid_domain, double dt)
 	// Extend velocities outside of liquid cells so that liquid can flow
 	extendVelocity(fluid_domain.macGrid());
 }
-
+    
 void FluidSolver::enforceDirichlet(MacGrid& mac_grid)
 {
 	// X vel
 	for (int j = 0; j < mac_grid.sizeY(); ++j)
 	{
 		for (int i = 0; i < mac_grid.sizeX(); ++i)
-		{
+		{   
 			// X velocity
 			if(	(mac_grid.cellType(i - 1, j) == SOLID && mac_grid.velXHalfIndexed(i,j) < 0) ||
 				(mac_grid.cellType(i, j)  == SOLID && mac_grid.velXHalfIndexed(i,j) > 0))
@@ -147,7 +147,7 @@ void FluidSolver::pressureSolve(MacGrid& mac_grid, MarkerParticleSet& particle_s
 			{
 				// UGLY SOLUTION TO VOLUME LOSS HERE!!
 				// MAKE PRESSURE PROPORTIONAL TO NUMBER OF PARTICLES
-				double k = 0.2;
+				double k = 0.02;
 
 				double p = x(idx) - k * n_particles(i,j); // Pressure
 
@@ -180,6 +180,7 @@ void FluidSolver::pressureSolve(MacGrid& mac_grid, MarkerParticleSet& particle_s
 void FluidSolver::extendVelocity(MacGrid& mac_grid)
 {
 	Grid<int> valid_mask(mac_grid.sizeX(), mac_grid.sizeY());
+	Grid<int> valid_mask_back_buffer(mac_grid.sizeX(), mac_grid.sizeY());
     for (int j = 0; j < mac_grid.sizeY(); ++j)
     {
         for (int i = 0; i < mac_grid.sizeX(); ++i)
@@ -187,13 +188,21 @@ void FluidSolver::extendVelocity(MacGrid& mac_grid)
         	if(mac_grid.cellType(i, j) == LIQUID)
         	{
         		valid_mask(i,j) = 1;
+        		valid_mask_back_buffer(i,j) = 1;
 				mac_grid.setVelXBackBufferHalfIndexed(i, j, mac_grid.velXHalfIndexed(i, j));
-	            mac_grid.setVelYBackBufferHalfIndexed(i, j, mac_grid.velYHalfIndexed(i, j));
+				mac_grid.setVelYBackBufferHalfIndexed(i, j, mac_grid.velYHalfIndexed(i, j));
+        	}
+        	else
+        	{
+        		valid_mask(i,j) = 0;
+				valid_mask_back_buffer(i,j) = 0;
+				mac_grid.setVelXBackBufferHalfIndexed(i, j, 0);
+				mac_grid.setVelYBackBufferHalfIndexed(i, j, 0);
         	}
         }
     }
 
-    int iterations = 20;
+    int iterations = 3;
     for (int iter = 0; iter < iterations; ++iter)
     {
         for (int j = 0; j < mac_grid.sizeY(); ++j)
@@ -209,26 +218,26 @@ void FluidSolver::extendVelocity(MacGrid& mac_grid)
 	            	// Get values of all neighbors
 	            	if(valid_mask.value(i-1, j) == 1)
 	            	{
-	            		new_vel_x += mac_grid.velXHalfIndexed(i-1, j);
-	            		new_vel_y += mac_grid.velYHalfIndexed(i-1, j);
+	            		new_vel_x += mac_grid.velXBackBufferHalfIndexed(i-1, j);
+	            		new_vel_y += mac_grid.velYBackBufferHalfIndexed(i-1, j);
 	            		n_valid_neighbors++;
 	            	}
 	            	if(valid_mask.value(i+1, j) == 1)
 	            	{
-	            		new_vel_x += mac_grid.velXHalfIndexed(i+1, j);
-	            		new_vel_y += mac_grid.velYHalfIndexed(i+1, j);
+	            		new_vel_x += mac_grid.velXBackBufferHalfIndexed(i+1, j);
+	            		new_vel_y += mac_grid.velYBackBufferHalfIndexed(i+1, j);
 	            		n_valid_neighbors++;
 	            	}
 	            	if(valid_mask.value(i, j-1) == 1)
 	            	{
-	            		new_vel_x += mac_grid.velXHalfIndexed(i, j-1);
-	            		new_vel_y += mac_grid.velYHalfIndexed(i, j-1);
+	            		new_vel_x += mac_grid.velXBackBufferHalfIndexed(i, j-1);
+	            		new_vel_y += mac_grid.velYBackBufferHalfIndexed(i, j-1);
 	            		n_valid_neighbors++;
 	            	}
 	            	if(valid_mask.value(i, j+1) == 1)
 	            	{
-	            		new_vel_x += mac_grid.velXHalfIndexed(i, j+1);
-	            		new_vel_y += mac_grid.velYHalfIndexed(i, j+1);
+	            		new_vel_x += mac_grid.velXBackBufferHalfIndexed(i, j+1);
+	            		new_vel_y += mac_grid.velYBackBufferHalfIndexed(i, j+1);
 	            		n_valid_neighbors++;
 	            	}
 
@@ -240,11 +249,15 @@ void FluidSolver::extendVelocity(MacGrid& mac_grid)
 
 	            		mac_grid.setVelXBackBufferHalfIndexed(i, j, new_vel_x);
 						mac_grid.setVelYBackBufferHalfIndexed(i, j, new_vel_y);
-	            		valid_mask(i, j) = 1;
+	            		valid_mask_back_buffer(i, j) = 1;
 	            	}
             	}
             }
         }
+        // Swap valid mask
+        Grid<int> tmp = std::move(valid_mask);
+        valid_mask = std::move(valid_mask_back_buffer);
+        valid_mask_back_buffer = std::move(tmp); 
     }
     mac_grid.swapBuffers();
 }
@@ -256,8 +269,8 @@ void FluidSolver::advectVelocity(MacGrid& mac_grid, double dt)
 	{
 		for (int i = 0; i < mac_grid.sizeX(); ++i)
 		{
-			mac_grid.setVelXBackBuffer(i, j, 0);
-			mac_grid.setVelYBackBuffer(i, j, 0);
+			mac_grid.setVelXBackBufferHalfIndexed(i, j, 0);
+			mac_grid.setVelYBackBufferHalfIndexed(i, j, 0);
 		}
 	}
 

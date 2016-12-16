@@ -16,8 +16,8 @@ int main(int argc, char const *argv[])
 	Renderer renderer(0,0, WORLD_SIZE, WORLD_SIZE);
 
 	// Setup
-	int n_frames = 100;
-	double seconds_per_frame = 0.5;
+	int n_frames = 200;
+	double seconds_per_frame = 0.2;
 
 	// Classify the cells of the domain (AIR, LIQUID or SOLID)
 	fluid_domain.classifyCells(fluid_domain.markerParticleSet());
@@ -36,7 +36,7 @@ int main(int argc, char const *argv[])
 			dt = 0.05;
 			
 			// Update
-            //if (i < 10)
+            //if (i < 1)
 			fluid_domain.addExternalForce(0, 10, dt);
 
 			// Solve
@@ -50,15 +50,14 @@ int main(int argc, char const *argv[])
 			fluid_domain.classifyCells(fluid_domain.markerParticleSet());
 			//fluid_domain.classifyCells(fluid_domain.levelSet());
 		}
-
 		// Render
 		renderer.clearCanvas();
 		renderer.renderGridCellsToCanvas(fluid_domain.macGrid());
 		//renderer.renderGridVelocitiesToCanvas(fluid_domain.macGrid());
-		//renderer.renderParticlesToCanvas(fluid_domain.markerParticleSet());
+		renderer.renderParticlesToCanvas(fluid_domain.markerParticleSet());
 		
 		std::stringstream file_name;
-		file_name << "test" << i << ".ppm";		
+		file_name << "test" << i << ".ppm";
 		renderer.writeCanvasToPpm(file_name.str().c_str());
 	}
 
