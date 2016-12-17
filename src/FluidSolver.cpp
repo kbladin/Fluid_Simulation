@@ -209,7 +209,7 @@ void FluidSolver::extendVelocity(MacGrid& mac_grid)
         {
             for (int i = 0; i < mac_grid.sizeX(); ++i)
             {
-            	if (valid_mask.value(i, j) == 0)
+            	if (valid_mask.value(i, j) == 0 && mac_grid.cellType(i, j) != SOLID)
             	{
 	            	double new_vel_x = 0;
 	            	double new_vel_y = 0;
