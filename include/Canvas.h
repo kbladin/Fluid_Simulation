@@ -5,14 +5,15 @@
 
 #include <math.h>
 
+#include "MathDefinitions.h"
 
 class Color
 {
 public:
 	Color();
-	Color(float red, float green, float blue);
+	Color(MyFloat red, MyFloat green, MyFloat blue);
 	~Color();
-	float r, g, b;
+	MyFloat r, g, b;
 private:
 };
 

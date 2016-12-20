@@ -10,10 +10,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/modules)
 
 # Find external packages
 
-#add_subdirectory(${PROJECT_SOURCE_DIR}/ext/eigen-eigen-07105f7124f9)
-#add_subdirectory(${PROJECT_SOURCE_DIR}/ext/armadillo-6.500.5)
-#find_package(EIGEN REQUIRED)
-
 find_package(GLM REQUIRED)
 
 set(EIGEN3_INCLUDE_DIR "default value" CACHE PATH "description")

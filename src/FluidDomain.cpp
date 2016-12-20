@@ -3,20 +3,26 @@
 #include <iostream>
 #include <random>
 
-static const int N_PARTICLES = 20000;
+static const int N_PARTICLES = 5000;
 
-FluidDomain::FluidDomain(int size_x, int size_y, double length_x, double length_y)
+FluidDomain::FluidDomain(
+	int size_x,
+	int size_y,
+	MyFloat length_x,
+	MyFloat length_y,
+	MyFloat density)
 	: _mac_grid(size_x, size_y, length_x, length_y)
 	, _level_set(size_x, size_y, length_x, length_y)
 	, _particle_set(N_PARTICLES)
+	, _density(density)
 {
 	// Set positions for all N_PARTICLES particles
 	for (auto it = _particle_set.begin(); it != _particle_set.end(); it++)
 	{
 		//it->setPosition(0.5 * size_x, 0.5 * size_y);
 		it->setPosition(
-			(rand() / double(INT_MAX) / 2 ) * length_x,
-			(rand() / double(INT_MAX) ) * length_y);
+			(rand() / MyFloat(INT_MAX) / 2 ) * (length_x - length_x / size_x * 2) + length_x / size_x + length_x / 4,
+			(rand() / MyFloat(INT_MAX) / 2 ) * (length_y - length_y / size_y * 2) + length_y / size_y + length_y / 4);
 	}
 }
 
@@ -30,45 +36,43 @@ void FluidDomain::addFluidSource()
 	std::cout << "FluidDomain::addFluidSource() not implemented!" << std::endl;
 }
 
-void FluidDomain::addExternalForce(double F_x, double F_y, double dt)
+void FluidDomain::addExternalForce(MyFloat F_x, MyFloat F_y, MyFloat dt)
 {
-	/*
-	for (int j = _SIZE_Y * 3 / 7; j < _SIZE_Y * 4 / 7; ++j)
-	{
-		for (int i = _SIZE_X * 3 / 7; i < _SIZE_X * 4 / 7; ++i)
-		{
-			if (cellTypeXHalfIndexed(i, j) == LIQUID)
-			{ // Only add force to the liquid cells
-				// Euler integration (here write directly to front buffer for now)
-				_vel_x_front_buffer(i,j) = 
-					_vel_x_front_buffer(i,j) + F_x * dt;
-				_vel_y_front_buffer(i,j) = 
-					_vel_y_front_buffer(i,j) + F_y * dt;
-			}
-		}
-	}
-*/
 	for (int j = 0; j < _mac_grid.sizeY(); ++j)
 	{
 		for (int i = 0; i < _mac_grid.sizeY(); ++i)
 		{
 			if (_mac_grid.cellType(i, j) == LIQUID)
 			{ // Only add force to the liquid cells
-                _mac_grid.setVelXHalfIndexed(i,j, _mac_grid.velXHalfIndexed(i,j) + F_x * dt);
-                _mac_grid.setVelYHalfIndexed(i,j, _mac_grid.velYHalfIndexed(i,j) + F_y * dt);
+                _mac_grid.setVelXHalfIndexed(i,j, _mac_grid.velXHalfIndexed(i,j) + F_x / _density * dt);
+                _mac_grid.setVelYHalfIndexed(i,j, _mac_grid.velYHalfIndexed(i,j) + F_y / _density * dt);
 			}
 		}
 	}
-	//_swapBuffers();
 }
 
-void FluidDomain::advectParticles(double dt)
+void FluidDomain::addExternalAcceleration(MyFloat a_x, MyFloat a_y, MyFloat dt)
+{
+	for (int j = 0; j < _mac_grid.sizeY(); ++j)
+	{
+		for (int i = 0; i < _mac_grid.sizeY(); ++i)
+		{
+			if (_mac_grid.cellType(i, j) == LIQUID)
+			{ // Only add force to the liquid cells
+                _mac_grid.setVelXHalfIndexed(i,j, _mac_grid.velXHalfIndexed(i,j) + a_x * dt);
+                _mac_grid.setVelYHalfIndexed(i,j, _mac_grid.velYHalfIndexed(i,j) + a_y * dt);
+			}
+		}
+	}
+}
+
+void FluidDomain::advectParticles(MyFloat dt)
 {
 	for (auto it = _particle_set.begin(); it != _particle_set.end(); it++)
 	{
 		// Position in world
-		double pos_x = it->posX();
-		double pos_y = it->posY();
+		MyFloat pos_x = it->posX();
+		MyFloat pos_y = it->posY();
 
 		// Calculate new position (forward Euler)
 		pos_x += _mac_grid.velXInterpolated(pos_x, pos_y) * dt;
@@ -79,7 +83,7 @@ void FluidDomain::advectParticles(double dt)
 	}
 }
 
-void FluidDomain::advectLevelSet(double dt)
+void FluidDomain::advectLevelSet(MyFloat dt)
 {
 	LevelSet new_level_set(
 		_level_set.sizeX(),
@@ -90,12 +94,12 @@ void FluidDomain::advectLevelSet(double dt)
 	{
 		for (int i = 0; i < _level_set.sizeY(); ++i)
 		{
-            double vel_x = _mac_grid.velX(i, j);
-            double vel_y = _mac_grid.velY(i, j);
-			double grad_x = _level_set.computeUpwindGradientX(i, j, vel_x);
-			double grad_y = _level_set.computeUpwindGradientY(i, j, vel_y);
+            MyFloat vel_x = _mac_grid.velX(i, j);
+            MyFloat vel_y = _mac_grid.velY(i, j);
+			MyFloat grad_x = _level_set.computeUpwindGradientX(i, j, vel_x);
+			MyFloat grad_y = _level_set.computeUpwindGradientY(i, j, vel_y);
 
-			double change_rate = - (vel_x * grad_x + vel_y * grad_y);
+			MyFloat change_rate = - (vel_x * grad_x + vel_y * grad_y);
 
 			// Forward Euler
 			new_level_set(i,j) = _level_set(i,j) + change_rate * dt * 5;
@@ -167,4 +171,9 @@ LevelSet& FluidDomain::levelSet()
 MarkerParticleSet& FluidDomain::markerParticleSet()
 {
 	return _particle_set;
+}
+
+const MyFloat FluidDomain::density()
+{
+	return _density;
 }

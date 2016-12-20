@@ -9,7 +9,7 @@ Color::Color()
 	b = 1;
 }
 
-Color::Color(float red, float green, float blue)
+Color::Color(MyFloat red, MyFloat green, MyFloat blue)
 {
 	r = red;
 	g = green;
@@ -36,10 +36,10 @@ Canvas::~Canvas()
 
 void Canvas::drawLine(int from_x, int from_y, int to_x, int to_y)
 {
-	double diff_x = (to_x - from_x);
-	double diff_y = (to_y - from_y);
+	MyFloat diff_x = (to_x - from_x);
+	MyFloat diff_y = (to_y - from_y);
 	
-	double distance = sqrt(diff_x * diff_x + diff_y * diff_y);
+	MyFloat distance = sqrt(diff_x * diff_x + diff_y * diff_y);
 	// Step one pixel at the time
 	for (int i = 0; i < distance; ++i)
 	{

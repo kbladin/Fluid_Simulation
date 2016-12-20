@@ -3,22 +3,24 @@
 
 #include <vector>
 
+#include "MathDefinitions.h"
+
 class MarkerParticle
 {
 public:
 	MarkerParticle();
-	MarkerParticle(double pos_x, double pos_y);
+	MarkerParticle(MyFloat pos_x, MyFloat pos_y);
 	~MarkerParticle();
 
 	// Getters
-	double posX() const;
-	double posY() const;
+	MyFloat posX() const;
+	MyFloat posY() const;
 
 	// Setters
-	void setPosition(double pos_x, double pos_y);
+	void setPosition(MyFloat pos_x, MyFloat pos_y);
 private:
-	double _pos_x;
-	double _pos_y;
+	MyFloat _pos_x;
+	MyFloat _pos_y;
 };
 
 class MarkerParticleSet
@@ -27,7 +29,7 @@ public:
 	MarkerParticleSet(int size);
 	~MarkerParticleSet();
 
-	void addParticle(double pos_x, double pos_y);
+	void addParticle(MyFloat pos_x, MyFloat pos_y);
 
 	typedef std::vector<MarkerParticle>::iterator iterator;
 	typedef std::vector<MarkerParticle>::const_iterator const_iterator;

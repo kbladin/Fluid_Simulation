@@ -8,10 +8,12 @@
 #include <Canvas.h>
 #include <MarkerParticleSet.h>
 
+#include "MathDefinitions.h"
+
 class Renderer
 {
 public:
-	Renderer(double x_min, double y_min, double x_max, double y_max);
+	Renderer(MyFloat x_min, MyFloat y_min, MyFloat x_max, MyFloat y_max);
 	~Renderer();
 
 	void clearCanvas();
@@ -25,10 +27,10 @@ private:
 	Canvas _canvas;
 
 	// World coordinates, defines a quad to render
-	double _x_min;
-	double _y_min;
-	double _x_max;
-	double _y_max;
+	MyFloat _x_min;
+	MyFloat _y_min;
+	MyFloat _x_max;
+	MyFloat _y_max;
 };
 
 #endif

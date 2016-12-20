@@ -5,23 +5,25 @@
 
 #include <Grid.h>
 
-class LevelSet : public SizedGrid<double>
+#include "MathDefinitions.h"
+
+class LevelSet : public SizedGrid<MyFloat>
 {
 public:
-	LevelSet(int size_x, int size_y, double length_x, double length_y);
+	LevelSet(int size_x, int size_y, MyFloat length_x, MyFloat length_y);
 	//LevelSet& operator=(LevelSet to_copy);
 	~LevelSet();
 
-	double distance(int from_i, int from_j, int to_i, int to_j);
+	MyFloat distance(int from_i, int from_j, int to_i, int to_j);
 
-	double computeUpwindGradientX(int i, int j, double vel_x);
-	double computeUpwindGradientY(int i, int j, double vel_y);
+	MyFloat computeUpwindGradientX(int i, int j, MyFloat vel_x);
+	MyFloat computeUpwindGradientY(int i, int j, MyFloat vel_y);
 
-	double lengthX() const;
-	double lengthY() const;
+	MyFloat lengthX() const;
+	MyFloat lengthY() const;
 private:
-	double _LENGTH_X;
-	double _LENGTH_Y;
+	MyFloat _LENGTH_X;
+	MyFloat _LENGTH_Y;
 };
 
 #endif

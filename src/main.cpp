@@ -7,7 +7,7 @@
 #include <string>
 
 static const int GRID_SIZE = 40;
-static const int WORLD_SIZE = 40;
+static const int WORLD_SIZE = 1;
 
 int main(int argc, char const *argv[])
 {
@@ -16,8 +16,8 @@ int main(int argc, char const *argv[])
 	Renderer renderer(0,0, WORLD_SIZE, WORLD_SIZE);
 
 	// Setup
-	int n_frames = 200;
-	double seconds_per_frame = 0.2;
+	int n_frames = 300;
+	MyFloat seconds_per_frame = 0.02;
 
 	// Classify the cells of the domain (AIR, LIQUID or SOLID)
 	fluid_domain.classifyCells(fluid_domain.markerParticleSet());
@@ -28,16 +28,17 @@ int main(int argc, char const *argv[])
 	{
 		std::cout << "iteration " << i << std::endl;
 
-		double dt;
+		MyFloat dt;
 		// Simulate
-		for (double frame_time = 0; frame_time < seconds_per_frame; frame_time += dt)
+		for (MyFloat frame_time = 0; frame_time < seconds_per_frame; frame_time += dt)
 		{
 			// Calculate dt (for now just set it)
-			dt = 0.05;
-			
-			// Update
-            //if (i < 1)
-			fluid_domain.addExternalForce(0, 10, dt);
+			dt = 0.0005;
+
+			if (dt > seconds_per_frame - frame_time)
+			{
+				dt = seconds_per_frame - frame_time;
+			}
 
 			// Solve
 			fluid_solver.step(fluid_domain, dt);

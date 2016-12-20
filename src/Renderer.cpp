@@ -2,7 +2,7 @@
 
 #define CLAMP(x, low, high) (x < low ? low : (x > high ? high : x))
 
-Renderer::Renderer(double x_min, double y_min, double x_max, double y_max)
+Renderer::Renderer(MyFloat x_min, MyFloat y_min, MyFloat x_max, MyFloat y_max)
 	: _canvas(400, 400)
 {
 	_x_min = x_min;
@@ -26,15 +26,15 @@ void Renderer::renderGridCellsToCanvas(const MacGrid& grid)
 	int grid_size_x = grid.sizeX();
 	int grid_size_y = grid.sizeY();
 
-	double scale_x = _canvas.width() / (_x_max - _x_min);
-	double scale_y = _canvas.height() / (_y_max - _y_min);
+	MyFloat scale_x = _canvas.width() / (_x_max - _x_min);
+	MyFloat scale_y = _canvas.height() / (_y_max - _y_min);
 
-	double translate_x = 0.5 * (_x_min * _canvas.width());
-	double translate_y = 0.5 * (_y_min * _canvas.height());
+	MyFloat translate_x = 0.5 * (_x_min * _canvas.width());
+	MyFloat translate_y = 0.5 * (_y_min * _canvas.height());
 
 	// Cell size in pixels
-	double cell_size_x = grid.deltaX() * scale_x;
-	double cell_size_y = grid.deltaY() * scale_y;
+	MyFloat cell_size_x = grid.deltaX() * scale_x;
+	MyFloat cell_size_y = grid.deltaY() * scale_y;
 
 	_canvas.setLineColor(Color(1,1,1));
 
@@ -65,15 +65,15 @@ void Renderer::renderLevelSetFunctionValuesToCanvas(const LevelSet& level_set)
 	int grid_size_x = level_set.sizeX();
 	int grid_size_y = level_set.sizeY();
 
-	double scale_x = _canvas.width() / (_x_max - _x_min);
-	double scale_y = _canvas.height() / (_y_max - _y_min);
+	MyFloat scale_x = _canvas.width() / (_x_max - _x_min);
+	MyFloat scale_y = _canvas.height() / (_y_max - _y_min);
 
-	double translate_x = 0.5 * (_x_min * _canvas.width());
-	double translate_y = 0.5 * (_y_min * _canvas.height());
+	MyFloat translate_x = 0.5 * (_x_min * _canvas.width());
+	MyFloat translate_y = 0.5 * (_y_min * _canvas.height());
 
 	// Cell size in pixels
-	double cell_size_x = level_set.deltaX() * scale_x;
-	double cell_size_y = level_set.deltaY() * scale_y;
+	MyFloat cell_size_x = level_set.deltaX() * scale_x;
+	MyFloat cell_size_y = level_set.deltaY() * scale_y;
 
 	_canvas.setLineColor(Color(1,1,1));
 
@@ -81,7 +81,7 @@ void Renderer::renderLevelSetFunctionValuesToCanvas(const LevelSet& level_set)
 	{
 		for (int i = 0; i < grid_size_x; ++i)
 		{
-			double value = level_set.value(i, j);
+			MyFloat value = level_set.value(i, j);
 			Color fill_color = Color(value, value, value);
 			_canvas.setFillColor(fill_color);
 			_canvas.fillRectangle(
@@ -98,24 +98,24 @@ void Renderer::renderGridVelocitiesToCanvas(const MacGrid& grid)
 	int grid_size_x = grid.sizeX();
 	int grid_size_y = grid.sizeY();
 
-	double scale_x = _canvas.width() / (_x_max - _x_min);
-	double scale_y = _canvas.height() / (_y_max - _y_min);
+	MyFloat scale_x = _canvas.width() / (_x_max - _x_min);
+	MyFloat scale_y = _canvas.height() / (_y_max - _y_min);
 
-	double translate_x = 0.5 * (_x_min * _canvas.width());
-	double translate_y = 0.5 * (_y_min * _canvas.height());
+	MyFloat translate_x = 0.5 * (_x_min * _canvas.width());
+	MyFloat translate_y = 0.5 * (_y_min * _canvas.height());
 
 	// Cell size in pixels
-	double cell_size_x = grid.deltaX() * scale_x;
-	double cell_size_y = grid.deltaY() * scale_y;
+	MyFloat cell_size_x = grid.deltaX() * scale_x;
+	MyFloat cell_size_y = grid.deltaY() * scale_y;
 
-	double line_scale = 20;
+	MyFloat line_scale = 20;
 	// Render all velocities as lines
 	for (int j = 0; j < grid_size_y; ++j)
 	{
 		for (int i = 0; i < grid_size_x; ++i)
 		{
-            double vel_x = grid.velX(i, j);
-            double vel_y = grid.velY(i, j);
+            MyFloat vel_x = grid.velX(i, j);
+            MyFloat vel_y = grid.velY(i, j);
 			// Since we draw from the center of each cell, add 0.5
 			int from_x = - translate_x + (0.5 + i) * cell_size_x;
 			int from_y = - translate_y + (0.5 + j) * cell_size_y;
@@ -129,9 +129,9 @@ void Renderer::renderGridVelocitiesToCanvas(const MacGrid& grid)
 
 			float length_scaled = length_in_pixels / (_canvas.width() / 3);
 
-			double blue = CLAMP(1 - length_scaled, 0 , 1);
-			double green = (CLAMP(length_scaled, 0 , 1) - CLAMP(length_scaled - 1, 0 , 1));
-			double red = CLAMP(length_scaled - 1, 0 , 1);
+			MyFloat blue = CLAMP(1 - length_scaled, 0 , 1);
+			MyFloat green = (CLAMP(length_scaled, 0 , 1) - CLAMP(length_scaled - 1, 0 , 1));
+			MyFloat red = CLAMP(length_scaled - 1, 0 , 1);
 	
 			_canvas.setLineColor(Color(red, green, blue));
 
@@ -142,14 +142,14 @@ void Renderer::renderGridVelocitiesToCanvas(const MacGrid& grid)
 
 void Renderer::renderParticlesToCanvas(const MarkerParticleSet& particle_set)
 {
-	double scale_x = _canvas.width() / (_x_max - _x_min);
-	double scale_y = _canvas.height() / (_y_max - _y_min);
+	MyFloat scale_x = _canvas.width() / (_x_max - _x_min);
+	MyFloat scale_y = _canvas.height() / (_y_max - _y_min);
 
-	double translate_x = 0.5 * (_x_min * _canvas.width());
-	double translate_y = 0.5 * (_y_min * _canvas.height());
+	MyFloat translate_x = 0.5 * (_x_min * _canvas.width());
+	MyFloat translate_y = 0.5 * (_y_min * _canvas.height());
 
-	_canvas.setLineColor(Color(0,0,0));
-	_canvas.setFillColor(Color(0,0,0));
+	_canvas.setLineColor(Color(0,0.5,0.8));
+	_canvas.setFillColor(Color(0,0.5,0.8));
 
 	for (auto it = particle_set.begin(); it != particle_set.end(); it++)
 	{
@@ -157,7 +157,7 @@ void Renderer::renderParticlesToCanvas(const MarkerParticleSet& particle_set)
 		int pos_x = - translate_x + scale_x * it->posX();
 		int pos_y = - translate_y + scale_y * it->posY();
 		
-		_canvas.drawPoint(pos_x, pos_y, 1);
+		_canvas.drawPoint(pos_x, pos_y, 3);
 	}
 }
 

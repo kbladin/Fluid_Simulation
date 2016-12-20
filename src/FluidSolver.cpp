@@ -10,14 +10,20 @@ FluidSolver::~FluidSolver()
 
 }
 
-void FluidSolver::step(FluidDomain& fluid_domain, double dt)
+void FluidSolver::step(FluidDomain& fluid_domain, MyFloat dt)
 {	
 	// Self advection
-	advectVelocity(fluid_domain.macGrid(), dt);
+	// (should be done on a divergence free field, therefore done first)
+	advectVelocitySemiLagrangian(fluid_domain.macGrid(), dt);
+	// Add external force
+	fluid_domain.addExternalAcceleration(0, 9.82, dt);
 	// Solve boundary condition
 	enforceDirichlet(fluid_domain.macGrid());
 	// Ensure divergence free
-	pressureSolve(fluid_domain.macGrid(), fluid_domain.markerParticleSet(), dt);
+	pressureSolve(
+		fluid_domain.macGrid(),
+		fluid_domain.markerParticleSet(),
+		fluid_domain.density());
 	// Solve boundary condition again due to numerical errors in previous step
 	enforceDirichlet(fluid_domain.macGrid());
 	// Extend velocities outside of liquid cells so that liquid can flow
@@ -44,8 +50,10 @@ void FluidSolver::enforceDirichlet(MacGrid& mac_grid)
 	}
 }
 
-
-void FluidSolver::pressureSolve(MacGrid& mac_grid, MarkerParticleSet& particle_set, double dt)
+void FluidSolver::pressureSolve(
+	MacGrid& mac_grid,
+	MarkerParticleSet& particle_set,
+	MyFloat density)
 {
 	// Find which cells are liquid by using a grid with indices
 	Grid<int> fluid_indices(mac_grid.sizeX(), mac_grid.sizeY());
@@ -79,9 +87,13 @@ void FluidSolver::pressureSolve(MacGrid& mac_grid, MarkerParticleSet& particle_s
 	}
 
 	// Allocate matrix in which to store connectivity information
-    Eigen::SparseMatrix<double> A(n_fluid_cells, n_fluid_cells);
+    Eigen::SparseMatrix<MyFloat> A(n_fluid_cells, n_fluid_cells);
 	// Vector containing negative divergence
+#ifdef USE_DOUBLE_PRECISION
 	Eigen::VectorXd b(n_fluid_cells);
+#else
+	Eigen::VectorXf b(n_fluid_cells);
+#endif
 
 	// Loop through all cells
 	for (int j = 0; j < mac_grid.sizeY(); ++j)
@@ -94,44 +106,46 @@ void FluidSolver::pressureSolve(MacGrid& mac_grid, MarkerParticleSet& particle_s
 				int n_non_solid_neighbors = 0;
 				if (mac_grid.cellType(i - 1, j) != SOLID) {
 					if (mac_grid.cellType(i - 1, j) == LIQUID) {
-						A.insert(fluid_indices(i - 1, j), idx) = 1;
+						A.insert(fluid_indices(i - 1, j), idx) = 1 / pow(mac_grid.deltaX(), 2);
 					}
 					n_non_solid_neighbors++;
 				}
 				if (mac_grid.cellType(i + 1, j) != SOLID) {
 					if (mac_grid.cellType(i + 1, j) == LIQUID) {
-						A.insert(fluid_indices(i + 1, j), idx) = 1;
+						A.insert(fluid_indices(i + 1, j), idx) = 1 / pow(mac_grid.deltaX(), 2);
 					}
 					n_non_solid_neighbors++;
 				}
 				if (mac_grid.cellType(i, j - 1) != SOLID) {
 					if (mac_grid.cellType(i, j - 1) == LIQUID) {
-						A.insert(fluid_indices(i, j - 1), idx) = 1;
+						A.insert(fluid_indices(i, j - 1), idx) = 1 / pow(mac_grid.deltaX(), 2);
 					}
 					n_non_solid_neighbors++;
 				}
 				if (mac_grid.cellType(i, j + 1) != SOLID) {
 					if (mac_grid.cellType(i, j + 1) == LIQUID) {
-						A.insert(fluid_indices(i, j + 1), idx) = 1;
+						A.insert(fluid_indices(i, j + 1), idx) = 1 / pow(mac_grid.deltaX(), 2);
 					}
 					n_non_solid_neighbors++;
 				}
 
 				// Set diagonal value of matrix
-				A.insert(idx, idx) = - n_non_solid_neighbors;
+				A.insert(idx, idx) = - n_non_solid_neighbors / pow(mac_grid.deltaX(), 2);
 
 				// Calculate negative divergence and store in b
-				b[idx] = - (mac_grid.divVelX(i, j) + mac_grid.divVelY(i, j));
+				b[idx] = mac_grid.divVelX(i, j) + mac_grid.divVelY(i, j);
 			}
 		}
 	}
 
 	// Vector containing pressures for each cell
+#ifdef USE_DOUBLE_PRECISION
 	Eigen::VectorXd x(n_fluid_cells);
+#else
+	Eigen::VectorXf x(n_fluid_cells);
+#endif
 	_cg_solver.compute(A);
 	x = _cg_solver.solve(b);
-
-	double density = 0.1;
 
 	// Loop throgh all cells to set new velocities from pressures
 	for (int j = 0; j < mac_grid.sizeY(); ++j)
@@ -147,24 +161,25 @@ void FluidSolver::pressureSolve(MacGrid& mac_grid, MarkerParticleSet& particle_s
 			{
 				// UGLY SOLUTION TO VOLUME LOSS HERE!!
 				// MAKE PRESSURE PROPORTIONAL TO NUMBER OF PARTICLES
-				double k = 0.02;
+				MyFloat k = 0;
 
-				double p = x(idx) - k * n_particles(i,j); // Pressure
+				MyFloat p = x(idx) + k * n_particles(i,j); // Pressure
 
-				double p_i_minus1 = idx_i_minus1 > 0 ? x(idx_i_minus1) - k * n_particles(i-1,j) : 0;
-				double p_j_minus1 = idx_j_minus1 > 0 ? x(idx_j_minus1) - k * n_particles(i,j-1) : 0;
+				MyFloat p_i_minus1 = idx_i_minus1 > 0 ? x(idx_i_minus1) + k * n_particles(i-1,j) : 0;
+				MyFloat p_j_minus1 = idx_j_minus1 > 0 ? x(idx_j_minus1) + k * n_particles(i,j-1) : 0;
 
 				// Get Pressure difference in x and y dimension
-				double pressure_diff_x = p - p_i_minus1;
-				double pressure_diff_y = p - p_j_minus1;
+				MyFloat pressure_diff_x = p - p_i_minus1;
+				MyFloat pressure_diff_y = p - p_j_minus1;
 
 				// Current velocities
-				double vel_x = mac_grid.velXHalfIndexed(i,j);
-				double vel_y = mac_grid.velYHalfIndexed(i,j);
+				MyFloat vel_x = mac_grid.velXHalfIndexed(i,j);
+				MyFloat vel_y = mac_grid.velYHalfIndexed(i,j);
 
 				// Calculate new velocity
-				double new_vel_x = vel_x + dt * 1 / density * pressure_diff_x * mac_grid.deltaX();
-				double new_vel_y = vel_y + dt * 1 / density * pressure_diff_y * mac_grid.deltaY();
+				MyFloat new_vel_x = vel_x - 1.0 / density * pressure_diff_x / mac_grid.deltaX();
+				MyFloat new_vel_y = vel_y - 1.0 / density * pressure_diff_y / mac_grid.deltaY();
+
 				// Write data
 				mac_grid.setVelXBackBufferHalfIndexed(i, j, new_vel_x);	
 				mac_grid.setVelYBackBufferHalfIndexed(i, j, new_vel_y);
@@ -211,8 +226,8 @@ void FluidSolver::extendVelocity(MacGrid& mac_grid)
             {
             	if (valid_mask.value(i, j) == 0 && mac_grid.cellType(i, j) != SOLID)
             	{
-	            	double new_vel_x = 0;
-	            	double new_vel_y = 0;
+	            	MyFloat new_vel_x = 0;
+	            	MyFloat new_vel_y = 0;
 	            	int n_valid_neighbors = 0;
 
 	            	// Get values of all neighbors
@@ -262,7 +277,7 @@ void FluidSolver::extendVelocity(MacGrid& mac_grid)
     mac_grid.swapBuffers();
 }
 
-void FluidSolver::advectVelocity(MacGrid& mac_grid, double dt)
+void FluidSolver::advectVelocitySemiLagrangian(MacGrid& mac_grid, MyFloat dt)
 {
 	// Set all to 0
 	for (int j = 0; j < mac_grid.sizeY(); ++j)
@@ -274,24 +289,18 @@ void FluidSolver::advectVelocity(MacGrid& mac_grid, double dt)
 		}
 	}
 
-
-	// Merge these loops later
-
-
-
-
-	// X
 	for (int j = 0; j < mac_grid.sizeY(); ++j)
 	{
 		for (int i = 0; i < mac_grid.sizeX(); ++i)
 		{
+			// X dimension
 			if (mac_grid.cellType(i, j) == LIQUID ||
 				mac_grid.cellType(i - 1, j) == LIQUID)
 			{ // Only advect the liquid cells
 				// Position in world coordinates
-				double x_pos = i * mac_grid.deltaX();
-				double y_pos = (j + 0.5) * mac_grid.deltaY();
-				double x_pos_prev, y_pos_prev;
+				MyFloat x_pos = i * mac_grid.deltaX();
+				MyFloat y_pos = (j + 0.5) * mac_grid.deltaY();
+				MyFloat x_pos_prev, y_pos_prev;
 //#define USE_EULER
 #ifdef USE_EULER
 				getAdvectedPositionForwardEuler(
@@ -311,32 +320,18 @@ void FluidSolver::advectVelocity(MacGrid& mac_grid, double dt)
 					&y_pos_prev);
 #endif
 				// Velocity to be stored
-				double v_x = mac_grid.velXInterpolated(x_pos, y_pos);
+				MyFloat v_x = mac_grid.velXInterpolated(x_pos, y_pos);
 				mac_grid.addToVelXInterpolated(x_pos_prev, y_pos_prev, v_x);
 			}
-		}
-	}
 
-
-
-
-
-
-
-
-
-	// Y
-	for (int j = 0; j < mac_grid.sizeY(); ++j)
-	{
-		for (int i = 0; i < mac_grid.sizeX(); ++i)
-		{
+			// Y dimension
 			if (mac_grid.cellType(i, j) == LIQUID ||
 				mac_grid.cellType(i, j - 1) == LIQUID)
 			{ // Only advect the liquid cells
 				// Position in world coordinates
-				double x_pos = (i + 0.5) * mac_grid.deltaX();
-				double y_pos = j * mac_grid.deltaY();
-				double x_pos_prev, y_pos_prev;
+				MyFloat x_pos = (i + 0.5) * mac_grid.deltaX();
+				MyFloat y_pos = j * mac_grid.deltaY();
+				MyFloat x_pos_prev, y_pos_prev;
 #ifdef USE_EULER
 				getAdvectedPositionForwardEuler(
 					mac_grid,
@@ -355,7 +350,7 @@ void FluidSolver::advectVelocity(MacGrid& mac_grid, double dt)
 					&y_pos_prev);
 #endif
 				// Velocity to be stored
-				double v_y = mac_grid.velYInterpolated(x_pos, y_pos);
+				MyFloat v_y = mac_grid.velYInterpolated(x_pos, y_pos);
 				mac_grid.addToVelYInterpolated(x_pos_prev, y_pos_prev, v_y);
 			}
 		}
@@ -364,35 +359,35 @@ void FluidSolver::advectVelocity(MacGrid& mac_grid, double dt)
 
 void FluidSolver::getAdvectedPositionRK3(
 	MacGrid& mac_grid,
-	double x_pos,
-	double y_pos,
-	double dt,
-	double* x,
-	double* y)
+	MyFloat x_pos,
+	MyFloat y_pos,
+	MyFloat dt,
+	MyFloat* x,
+	MyFloat* y)
 {
-	double k_1x = mac_grid.velXInterpolated(x_pos, y_pos);
-	double k_1y = mac_grid.velYInterpolated(x_pos, y_pos);
+	MyFloat k_1x = mac_grid.velXInterpolated(x_pos, y_pos);
+	MyFloat k_1y = mac_grid.velYInterpolated(x_pos, y_pos);
 	
-	double k_2x = mac_grid.velXInterpolated(
+	MyFloat k_2x = mac_grid.velXInterpolated(
 		x_pos + 1.0/2 * dt * k_1x,
 		y_pos + 1.0/2 * dt * k_1y);
-	double k_2y = mac_grid.velYInterpolated(
+	MyFloat k_2y = mac_grid.velYInterpolated(
 		x_pos + 1.0/2 * dt * k_1x,
 		y_pos + 1.0/2 * dt * k_1y);
 
-	double k_3x = mac_grid.velXInterpolated(
+	MyFloat k_3x = mac_grid.velXInterpolated(
 		x_pos + 3.0/4 * dt * k_2x,
 		y_pos + 3.0/4 * dt * k_2y);
-	double k_3y = mac_grid.velYInterpolated(
+	MyFloat k_3y = mac_grid.velYInterpolated(
 		x_pos + 3.0/4 * dt * k_2x,
 		y_pos + 3.0/4 * dt * k_2y);
 
-	double x_pos_prev = x_pos -
+	MyFloat x_pos_prev = x_pos -
 	dt * 1.0/9 * (
 		2 * k_1x +
 		3 * k_2x +
 		4 * k_3x);
-	double y_pos_prev = y_pos -
+	MyFloat y_pos_prev = y_pos -
 	dt * 1.0/6 * (
 		2 * k_1y +
 		3 * k_2y +
@@ -404,19 +399,19 @@ void FluidSolver::getAdvectedPositionRK3(
 
 void FluidSolver::getAdvectedPositionForwardEuler(
 	MacGrid& mac_grid,
-	double x_pos,
-	double y_pos,
-	double dt,
-	double* x,
-	double* y)
+	MyFloat x_pos,
+	MyFloat y_pos,
+	MyFloat dt,
+	MyFloat* x,
+	MyFloat* y)
 {
 	// Velcoity
-	double v_x = mac_grid.velXInterpolated(x_pos, y_pos);
-	double v_y = mac_grid.velYInterpolated(x_pos, y_pos);
+	MyFloat v_x = mac_grid.velXInterpolated(x_pos, y_pos);
+	MyFloat v_y = mac_grid.velYInterpolated(x_pos, y_pos);
 
 	// Previous particle position
-	double x_pos_prev = x_pos - v_x * dt;
-	double y_pos_prev = y_pos - v_y * dt;
+	MyFloat x_pos_prev = x_pos - v_x * dt;
+	MyFloat y_pos_prev = y_pos - v_y * dt;
 
 	*x = x_pos_prev;
 	*y = y_pos_prev;
