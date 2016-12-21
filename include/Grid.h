@@ -12,27 +12,25 @@ template <class T>
 class Grid
 {
 public:
-	// Constructors / Destructor
 	Grid(int size_x, int size_y);
 	~Grid();
-	Grid<T>& operator=(Grid<T> to_copy);
 	
 	// Transform
-	void linearTo2D(int idx, int* i, int* j) const;
-	int twoDToLinear(int i, int j) const;
+	inline void linearTo2D(int idx, int* i, int* j) const;
+	inline int twoDToLinear(int i, int j) const;
 
 	// Get
-	T value(int i, int j) const;
-	int sizeX() const;
-	int sizeY() const;
+	inline T value(int i, int j) const;
+	inline int sizeX() const;
+	inline int sizeY() const;
 
 	// Set
-	T& operator()(int i, int j);
+	inline T& operator()(int i, int j);
 
 protected:
 	// Constants
-	const int _SIZE_X;
-	const int _SIZE_Y;
+	int _SIZE_X;
+	int _SIZE_Y;
 
 	// Data
 	std::vector<T> data;
@@ -45,23 +43,28 @@ public:
 	// Constructors / Destructor
 	SizedGrid(int size_x, int size_y, MyFloat delta_x, MyFloat delta_y);
 	~SizedGrid();
-	SizedGrid<T>& operator=(SizedGrid<T> to_copy);
-
+	
 	// Get
-	T valueInterpolated(MyFloat x, MyFloat y) const;
-	MyFloat deltaX() const;
-	MyFloat deltaY() const;
+	/** Value interpolated with world coordinates as input.
+		Reads from the four closest grid points.
+	*/
+	inline T valueInterpolated(MyFloat x, MyFloat y) const;
+	inline MyFloat deltaX() const;
+	inline MyFloat deltaY() const;
+	void worldToCell(MyFloat x, MyFloat y, int* i, int* j) const;
+	void cellToWorld(int i, int j, MyFloat* x, MyFloat* y) const;
 
 	// Set
-	void addToValueInterpolated(MyFloat x, MyFloat y, T value);
+	/** Value interpolated with world coordinates as input.
+		Writes to the four closest grid points.
+	*/
+	inline void addToValueInterpolated(MyFloat x, MyFloat y, T value);
 private:
-	const MyFloat _DELTA_X;
-	const MyFloat _DELTA_Y;
+	MyFloat _DELTA_X;
+	MyFloat _DELTA_Y;
 };
 
 // The functions are defined here due to the template class.
-
-#define CLAMP(x, low, high) x < low ? low : (x > high ? high : x)
 
 template <class T>
 Grid<T>::Grid(int size_x, int size_y) :
@@ -82,13 +85,6 @@ Grid<T>::~Grid()
 }
 
 template <class T>
-inline Grid<T>& Grid<T>::operator=(Grid<T> to_copy)
-{
-	data = to_copy.data;
-	return *this;
-}
-
-template <class T>
 inline void Grid<T>::linearTo2D(int idx, int* i, int* j) const
 {
 	*i = idx % (_SIZE_X);
@@ -104,8 +100,8 @@ inline int Grid<T>::twoDToLinear(int i, int j) const
 template <class T>
 inline T Grid<T>::value(int i, int j) const
 {
-	i = CLAMP(i, 0, _SIZE_X - 1);
-	j = CLAMP(j, 0, _SIZE_Y - 1);
+	//i = CLAMP(i, 0, _SIZE_X - 1);
+	//j = CLAMP(j, 0, _SIZE_Y - 1);
 	return data[twoDToLinear(i, j)];
 }
 
@@ -124,8 +120,8 @@ inline int Grid<T>::sizeY() const
 template <class T>
 inline T& Grid<T>::operator()(int i, int j)
 {
-	i = CLAMP(i, 0, _SIZE_X - 1);
-	j = CLAMP(j, 0, _SIZE_Y - 1);
+	//i = CLAMP(i, 0, _SIZE_X - 1);
+	//j = CLAMP(j, 0, _SIZE_Y - 1);
 	return data[twoDToLinear(i, j)];
 }
 
@@ -144,22 +140,15 @@ SizedGrid<T>::~SizedGrid()
 }
 
 template <class T>
-inline SizedGrid<T>& SizedGrid<T>::operator=(SizedGrid<T> to_copy)
-{
-	this->data = to_copy.data;
-	return *this;
-}
-
-template <class T>
 inline T SizedGrid<T>::valueInterpolated(MyFloat x, MyFloat y) const
 {
 	// Calculate indices
-	int i = x / this->_DELTA_X;
-	int j = y / this->_DELTA_Y;
+	int i = x / _DELTA_X;
+	int j = y / _DELTA_Y;
 	int i_plus1 = i + 1;
 	int j_plus1 = j + 1;
-	MyFloat i_frac = x / this->_DELTA_X - i;
-	MyFloat j_frac = y / this->_DELTA_Y - j;
+	MyFloat i_frac = x / _DELTA_X - i;
+	MyFloat j_frac = y / _DELTA_Y - j;
 
 	assert(i_frac <= 1);
 	assert(j_frac <= 1); 
@@ -197,9 +186,20 @@ inline MyFloat SizedGrid<T>::deltaY() const
 	return _DELTA_Y;
 }
 
-/**
-	Writes to the four closest grid points, writes to back buffer.
-*/
+template <class T>
+void SizedGrid<T>::worldToCell(MyFloat x, MyFloat y, int* i, int* j) const
+{
+	*i = x / _DELTA_X;
+	*j = y / _DELTA_Y;
+}
+
+template <class T>
+void SizedGrid<T>::cellToWorld(int i, int j, MyFloat* x, MyFloat* y) const
+{
+	*x = i * _DELTA_X;
+	*y = j * _DELTA_Y;
+}
+
 template <class T>
 inline void SizedGrid<T>::addToValueInterpolated(MyFloat x, MyFloat y, T value)
 {

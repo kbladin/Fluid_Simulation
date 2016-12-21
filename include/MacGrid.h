@@ -23,12 +23,6 @@ public:
 
 	void clearCellTypeBuffer();
 
-	// Index transforms
-	void worldToCell(MyFloat x, MyFloat y, int* i, int* j) const;
-	void cellToWorld(int i, int j, MyFloat* x, MyFloat* y) const;
-	void linearTo2DCellCenter(int idx, int* i, int* j) const;
-	int twoDToLinearCellCenter(int i, int j) const;
-
 	// Getters
 	MyFloat velX(int i, int j) const;
 	MyFloat velY(int i, int j) const;
@@ -40,7 +34,6 @@ public:
 	MyFloat velYInterpolated(MyFloat x, MyFloat y) const;
 	MyFloat divVelX(int i, int j) const;
 	MyFloat divVelY(int i, int j) const;
-	glm::dmat2 computeVelocityGradientMatrix(int i, int j);
 	int sizeX() const;
 	int sizeY() const;
 	MyFloat lengthX() const;
@@ -48,6 +41,8 @@ public:
 	MyFloat deltaX() const;
 	MyFloat deltaY() const;
 	CellType cellType(int i, int j) const;
+	
+	glm::dmat2 computeVelocityGradientMatrix(int i, int j);
 	
 	// Setters
 	void setVelXHalfIndexed(int i, int j, MyFloat vel_x);
@@ -71,9 +66,8 @@ private:
 	const MyFloat _DELTA_X;
 	const MyFloat _DELTA_Y;
 
-	// Always render to back buffer from front buffer, then swap them
-	// since advection can not be done in place, another set of data is needed
-	// (except for when adding forces)
+	// Velocity grids need front buffers and back buffers
+	// Normally read from front buffers and write to back buffers, then swap.
 	SizedGrid<MyFloat> _vel_x_front_buffer;
 	SizedGrid<MyFloat> _vel_y_front_buffer;
 

@@ -12,11 +12,21 @@
 class FluidSolver
 {
 public:
-	FluidSolver();
+	FluidSolver(int x_size, int y_size);
 	~FluidSolver();
 
 	void step(FluidDomain& fluid_domain, MyFloat dt);
 private:
+	void addExternalForce(
+		FluidDomain& fluid_domain,
+		MyFloat F_x,
+		MyFloat F_y,
+		MyFloat dt);
+	void addExternalAcceleration(
+		MacGrid& mac_grid,
+		MyFloat a_x,
+		MyFloat a_y,
+		MyFloat dt);
 	void enforceDirichlet(MacGrid& mac_grid);
 	void pressureSolve(
 		MacGrid& mac_grid,
@@ -25,7 +35,10 @@ private:
 	void extendVelocity(MacGrid& mac_grid);
 
 	void advectVelocitySemiLagrangian(MacGrid& mac_grid, MyFloat dt);
-	void advectParticles(MarkerParticleSet& particle_set, MacGrid& mac_grid, MyFloat dt);
+	void advectParticles(
+		MarkerParticleSet& particle_set,
+		MacGrid& mac_grid,
+		MyFloat dt);
 	void advectLevelSet(LevelSet& levelSet, MacGrid& mac_grid, MyFloat dt);
 
 	void getAdvectedPositionRK3(
@@ -45,6 +58,13 @@ private:
 
 	// Solver of linear system
 	Eigen::ConjugateGradient<Eigen::SparseMatrix<MyFloat> > _cg_solver;
+
+	// Cached
+	Grid<int> _fluid_indices;
+	//Grid<int> _n_particles;
+	Grid<int> _valid_mask;
+	Grid<int> _valid_mask_back_buffer;
+	const int _SIZE_X, _SIZE_Y;
 };
 
 #endif

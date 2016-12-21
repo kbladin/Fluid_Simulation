@@ -16,16 +16,14 @@ public:
 	Renderer(MyFloat x_min, MyFloat y_min, MyFloat x_max, MyFloat y_max);
 	~Renderer();
 
-	void clearCanvas();
-	void renderGridVelocitiesToCanvas(const MacGrid& grid);
-	void renderGridCellsToCanvas(const MacGrid& grid);
-	void renderLevelSetFunctionValuesToCanvas(const LevelSet& level_set);
-	void renderParticlesToCanvas(const MarkerParticleSet& particle_set);
+	void clearCanvas(Canvas& canvas);
+	void renderGridVelocitiesToCanvas(const MacGrid& grid, Canvas& canvas);
+	void renderGridCellsToCanvas(const MacGrid& grid, Canvas& canvas);
+	void renderLevelSetFunctionValuesToCanvas(const LevelSet& level_set, Canvas& canvas);
+	void renderParticlesToCanvas(const MarkerParticleSet& particle_set, Canvas& canvas);
 
-	void writeCanvasToPpm( const char* file_path);
+	void writeCanvasToPpm( const char* file_path, Canvas& canvas);
 private:
-	Canvas _canvas;
-
 	// World coordinates, defines a quad to render
 	MyFloat _x_min;
 	MyFloat _y_min;

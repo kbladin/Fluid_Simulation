@@ -47,82 +47,38 @@ void MacGrid::clearCellTypeBuffer()
 	}
 }
 
-// Index transforms
-void MacGrid::worldToCell(MyFloat x, MyFloat y, int* i, int* j) const
-{
-	*i = x / _DELTA_X;
-	*j = y / _DELTA_Y;
-}
-
-void MacGrid::cellToWorld(int i, int j, MyFloat* x, MyFloat* y) const
-{
-	*x = i * _DELTA_X;
-	*y = j * _DELTA_Y;
-}
-
-void MacGrid::linearTo2DCellCenter(int idx, int* i, int* j) const
-{
-	*i = idx % _SIZE_X;
-	*j = idx / _SIZE_X;
-}
-
-int MacGrid::twoDToLinearCellCenter(int i, int j) const
-{
-	return i + j * _SIZE_X;
-}
-
 // Getters
-/**
-	Returns an interpolated value due to the mac grid structure.
-*/
+
 MyFloat MacGrid::velX(int i, int j) const
 {
 	return (_vel_x_front_buffer.value(i,j) + _vel_x_front_buffer.value(i+1,j)) / 2;
 }
-/**
-	Returns an interpolated value due to the mac grid structure.
-*/
+
 MyFloat MacGrid::velY(int i, int j) const
 {
 	return (_vel_y_front_buffer.value(i,j) + _vel_y_front_buffer.value(i,j+1)) / 2;
 }
 
-/**
-	Returns u[x - 1/2][y], velocities are stored in the borders of the cells.
-*/
 MyFloat MacGrid::velXHalfIndexed(int i, int j) const
 {
 	return _vel_x_front_buffer.value(i,j);
 }
 
-/**
-	Returns u[x][y - 1/2], velocities are stored in the borders of the cells.
-*/
 MyFloat MacGrid::velYBackBufferHalfIndexed(int i, int j) const
 {
 	return _vel_y_back_buffer.value(i,j);
 }
 
-/**
-	Returns u[x - 1/2][y], velocities are stored in the borders of the cells.
-*/
 MyFloat MacGrid::velXBackBufferHalfIndexed(int i, int j) const
 {
 	return _vel_x_back_buffer.value(i,j);
 }
 
-/**
-	Returns u[x][y - 1/2], velocities are stored in the borders of the cells.
-*/
 MyFloat MacGrid::velYHalfIndexed(int i, int j) const
 {
 	return _vel_y_front_buffer.value(i,j);
 }
 
-/**
-	Input is in world coordinates, not necessary on cell borders.
-	Currently simple linear interpolation.
-*/
 MyFloat MacGrid::velXInterpolated(MyFloat x, MyFloat y) const
 {
 	MyFloat v_x = _vel_x_front_buffer.valueInterpolated(x, y - _DELTA_Y * 0.5);
@@ -130,10 +86,6 @@ MyFloat MacGrid::velXInterpolated(MyFloat x, MyFloat y) const
 	return v_x;
 }
 
-/**
-	Input is in world coordinates, not necessary on cell borders.
-	Currently simple linear interpolation.
-*/
 MyFloat MacGrid::velYInterpolated(MyFloat x, MyFloat y) const
 {
 	MyFloat v_y = _vel_y_front_buffer.valueInterpolated(x - _DELTA_X * 0.5, y);
@@ -144,17 +96,10 @@ MyFloat MacGrid::velYInterpolated(MyFloat x, MyFloat y) const
 CellType MacGrid::cellType(int i, int j) const
 {
 	// Outside it is always SOLID
-	bool i_outside = i < 0 ? true : (i > _SIZE_X - 1 ? true : false);
-	bool j_outside = j < 0 ? true : (j > _SIZE_Y - 1 ? true : false);
-	bool boundary = i_outside || j_outside;
-	if (boundary)
-	{
-		return SOLID;
-	}
-	else
-	{
-		return _cell_type_buffer.value(i, j);
-	}
+	//bool i_outside = i < 0 ? true : (i > _SIZE_X - 1 ? true : false);
+	//bool j_outside = j < 0 ? true : (j > _SIZE_Y - 1 ? true : false);
+	//bool boundary = i_outside || j_outside;
+	return _cell_type_buffer.value(i, j);
 }
 
 MyFloat MacGrid::divVelX(int i, int j) const
@@ -171,20 +116,6 @@ MyFloat MacGrid::divVelY(int i, int j) const
 		(_vel_y_front_buffer.value(i, j + 1)
 		- _vel_y_front_buffer.value(i, j))
 		/ _DELTA_Y;
-}
-
-glm::dmat2 MacGrid::computeVelocityGradientMatrix(int i, int j)
-{
-	glm::dmat2 vel_grad;
-	vel_grad[0][0] = divVelX(i, j);
-	vel_grad[0][1] = (_vel_x_front_buffer.value(i, j + 1)
-		- _vel_x_front_buffer.value(i, j))
-		/ _DELTA_Y;
-	vel_grad[1][0] = (_vel_y_front_buffer.value(i + 1, j)
-		- _vel_y_front_buffer.value(i, j))
-		/ _DELTA_X;
-	vel_grad[1][1] = divVelY(i, j);
-	return vel_grad;
 }
 
 MyFloat MacGrid::lengthX() const
@@ -217,9 +148,21 @@ MyFloat MacGrid::deltaY() const
 	return _DELTA_Y;
 }
 
+glm::dmat2 MacGrid::computeVelocityGradientMatrix(int i, int j)
+{
+	glm::dmat2 vel_grad;
+	vel_grad[0][0] = divVelX(i, j);
+	vel_grad[0][1] = (_vel_x_front_buffer.value(i, j + 1)
+		- _vel_x_front_buffer.value(i, j))
+		/ _DELTA_Y;
+	vel_grad[1][0] = (_vel_y_front_buffer.value(i + 1, j)
+		- _vel_y_front_buffer.value(i, j))
+		/ _DELTA_X;
+	vel_grad[1][1] = divVelY(i, j);
+	return vel_grad;
+}
+
 // Setters
-/**
-*/
 
 void MacGrid::setVelXHalfIndexed(int i, int j, MyFloat vel_x)
 {
@@ -236,8 +179,6 @@ void MacGrid::setVelXBackBufferHalfIndexed(int i, int j, MyFloat vel_x)
 	_vel_x_back_buffer(i, j) = vel_x;
 }
 
-/**
-*/
 void MacGrid::setVelYBackBufferHalfIndexed(int i, int j, MyFloat vel_y)
 {
 	_vel_y_back_buffer(i, j) = vel_y;
@@ -260,18 +201,12 @@ void MacGrid::setCellType(int i, int j, CellType cell_type)
 	_cell_type_buffer(i, j) = cell_type;
 }
 
-/**
-	Writes to the four closest grid points, writes to back buffer.
-*/
 void MacGrid::addToVelXInterpolated(MyFloat x, MyFloat y, MyFloat vel_x)
 {
 	_vel_x_back_buffer.addToValueInterpolated(x, y - 0.5 * _DELTA_Y, vel_x);
 	// -0.5 Due to the MAC grid structure
 }
 
-/**
-	Writes to the four closest grid points, writes to back buffer.
-*/
 void MacGrid::addToVelYInterpolated(MyFloat x, MyFloat y, MyFloat vel_y)
 {
 	_vel_y_back_buffer.addToValueInterpolated(x - 0.5 * _DELTA_X, y, vel_y);
@@ -280,12 +215,12 @@ void MacGrid::addToVelYInterpolated(MyFloat x, MyFloat y, MyFloat vel_y)
 
 void MacGrid::swapBuffers()
 {
-	SizedGrid<MyFloat> vel_x_tmp = std::move(_vel_x_front_buffer);
-	SizedGrid<MyFloat> vel_y_tmp = std::move(_vel_y_front_buffer);
+	SizedGrid<MyFloat>* vel_x_tmp = &_vel_x_front_buffer;
+	SizedGrid<MyFloat>* vel_y_tmp = &_vel_y_front_buffer;
 
 	_vel_x_front_buffer = std::move(_vel_x_back_buffer);
 	_vel_y_front_buffer = std::move(_vel_y_back_buffer);
 
-	_vel_x_back_buffer = std::move(vel_x_tmp);
-	_vel_y_back_buffer = std::move(vel_y_tmp);
+	_vel_x_back_buffer = std::move(*vel_x_tmp);
+	_vel_y_back_buffer = std::move(*vel_y_tmp);
 }

@@ -3,7 +3,59 @@
 #include <iostream>
 #include <random>
 
-static const int N_PARTICLES = 5000;
+FluidSource::FluidSource(
+	MyFloat x_min,
+	MyFloat x_max,
+	MyFloat y_min,
+	MyFloat y_max,
+	MyFloat time_step,
+	int max_creations)
+	: _x_min(x_min)
+	, _x_max(x_max)
+	, _y_min(y_min)
+	, _y_max(y_max)
+	, _time_step(time_step)
+	, _time_since_last(0.0)
+	, _max_creations(max_creations)
+	, _n_creations(0)
+{
+
+}
+
+FluidSource::~FluidSource()
+{
+
+}
+
+void FluidSource::update(MarkerParticleSet& particle_set, MyFloat dt)
+{
+	if (isFinished())
+		return;
+
+	if (_time_since_last >= _time_step)
+	{
+		MyFloat x_incr = 1.0 / 40.0 / 4.0;
+		MyFloat y_incr = 1.0 / 40.0 / 4.0;
+		for (MyFloat y = _y_min; y < _y_max; y += y_incr)
+		{
+			for (MyFloat x = _x_min; x < _x_max; x += x_incr)
+			{
+				particle_set.addParticle(x, y);
+			}
+		}
+
+		_time_since_last = 0;
+		_n_creations++;
+	}
+	_time_since_last += dt;
+}
+
+bool FluidSource::isFinished()
+{
+	return _max_creations != -1 && _n_creations >= _max_creations;
+}
+
+static const int N_PARTICLES = 0;
 
 FluidDomain::FluidDomain(
 	int size_x,
@@ -11,18 +63,17 @@ FluidDomain::FluidDomain(
 	MyFloat length_x,
 	MyFloat length_y,
 	MyFloat density)
-	: _mac_grid(size_x, size_y, length_x, length_y)
-	, _level_set(size_x, size_y, length_x, length_y)
-	, _particle_set(N_PARTICLES)
-	, _density(density)
+	: _density(density)
+    , _mac_grid(size_x, size_y, length_x, length_y)
+    , _level_set(size_x, size_y, length_x, length_y)
+    , _particle_set(N_PARTICLES)
 {
 	// Set positions for all N_PARTICLES particles
 	for (auto it = _particle_set.begin(); it != _particle_set.end(); it++)
 	{
-		//it->setPosition(0.5 * size_x, 0.5 * size_y);
 		it->setPosition(
-			(rand() / MyFloat(INT_MAX) / 2 ) * (length_x - length_x / size_x * 2) + length_x / size_x + length_x / 4,
-			(rand() / MyFloat(INT_MAX) / 2 ) * (length_y - length_y / size_y * 2) + length_y / size_y + length_y / 4);
+			(rand() / MyFloat(INT_MAX) / 2 ) * (length_x - length_x / size_x * 2) + length_x / size_x,
+			(rand() / MyFloat(INT_MAX) / 2 ) * (length_y - length_y / size_y * 2) + length_y / 2);
 	}
 }
 
@@ -31,39 +82,26 @@ FluidDomain::~FluidDomain()
 
 }
 
-void FluidDomain::addFluidSource()
+void FluidDomain::addFluidSource(FluidSource fluid_source)
 {
-	std::cout << "FluidDomain::addFluidSource() not implemented!" << std::endl;
+	_fluid_sources.push_back(fluid_source);
 }
 
-void FluidDomain::addExternalForce(MyFloat F_x, MyFloat F_y, MyFloat dt)
+void FluidDomain::update(MyFloat dt)
 {
-	for (int j = 0; j < _mac_grid.sizeY(); ++j)
+	// Update all fluid sources
+	for (int i = 0; i < _fluid_sources.size(); ++i)
 	{
-		for (int i = 0; i < _mac_grid.sizeY(); ++i)
-		{
-			if (_mac_grid.cellType(i, j) == LIQUID)
-			{ // Only add force to the liquid cells
-                _mac_grid.setVelXHalfIndexed(i,j, _mac_grid.velXHalfIndexed(i,j) + F_x / _density * dt);
-                _mac_grid.setVelYHalfIndexed(i,j, _mac_grid.velYHalfIndexed(i,j) + F_y / _density * dt);
-			}
-		}
+		_fluid_sources[i].update(_particle_set, dt);
 	}
-}
 
-void FluidDomain::addExternalAcceleration(MyFloat a_x, MyFloat a_y, MyFloat dt)
-{
-	for (int j = 0; j < _mac_grid.sizeY(); ++j)
-	{
-		for (int i = 0; i < _mac_grid.sizeY(); ++i)
-		{
-			if (_mac_grid.cellType(i, j) == LIQUID)
-			{ // Only add force to the liquid cells
-                _mac_grid.setVelXHalfIndexed(i,j, _mac_grid.velXHalfIndexed(i,j) + a_x * dt);
-                _mac_grid.setVelYHalfIndexed(i,j, _mac_grid.velYHalfIndexed(i,j) + a_y * dt);
-			}
-		}
-	}
+	// Advect the fluid through the newly updated field
+	advectParticles(dt);
+	//fluid_domain.advectLevelSet(dt);
+
+	// Classify the cells of the domain (AIR, LIQUID or SOLID)
+	classifyCells(_particle_set);
+	//fluid_domain.classifyCells(_level_set);
 }
 
 void FluidDomain::advectParticles(MyFloat dt)

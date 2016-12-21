@@ -1,6 +1,6 @@
 #include <Canvas.h>
 
-#define CLAMP(x, low, high) x < low ? low : (x > high ? high : x)
+#include "MathDefinitions.h"
 
 Color::Color()
 {
@@ -28,10 +28,12 @@ Canvas::Canvas(int width, int height) :
 	_fill_color(1,1,1),
 	_pixel_data(width, height)
 {
+
 }
 
 Canvas::~Canvas()
 {
+	
 }
 
 void Canvas::drawLine(int from_x, int from_y, int to_x, int to_y)

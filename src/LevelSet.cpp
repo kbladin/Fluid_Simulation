@@ -1,7 +1,5 @@
 #include <LevelSet.h>
 
-#define CLAMP(x, low, high) x < low ? low : (x > high ? high : x)
-
 LevelSet::LevelSet(int size_x, int size_y, MyFloat length_x, MyFloat length_y) :
 	SizedGrid<MyFloat>(size_x, size_y, length_x / size_x, length_y / size_y),
 	_LENGTH_X(length_x),
@@ -15,13 +13,7 @@ LevelSet::LevelSet(int size_x, int size_y, MyFloat length_x, MyFloat length_y) :
 		}
 	}
 }
-/*
-LevelSet& LevelSet::operator=(LevelSet to_copy)
-{
-	this->data = to_copy.data;
-	return *this;
-}
-*/
+
 LevelSet::~LevelSet()
 {
 

@@ -11,7 +11,6 @@ class LevelSet : public SizedGrid<MyFloat>
 {
 public:
 	LevelSet(int size_x, int size_y, MyFloat length_x, MyFloat length_y);
-	//LevelSet& operator=(LevelSet to_copy);
 	~LevelSet();
 
 	MyFloat distance(int from_i, int from_j, int to_i, int to_j);
