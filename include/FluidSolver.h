@@ -62,8 +62,8 @@ private:
 	// Cached
 	Grid<int> _fluid_indices;
 	//Grid<int> _n_particles;
-	Grid<int> _valid_mask;
-	Grid<int> _valid_mask_back_buffer;
+	Grid<char> _valid_mask;
+	Grid<char> _valid_mask_back_buffer;
 	const int _SIZE_X, _SIZE_Y;
 };
 

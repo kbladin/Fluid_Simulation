@@ -20,7 +20,7 @@ int main(int argc, char const *argv[])
 	Canvas canvas(400, 400);
 
 	// Setup
-	fluid_domain.addFluidSource(FluidSource(0.4, 0.6, 0.4, 0.6, 1.0, 4));
+	fluid_domain.addFluidSource(FluidSource(0.3, 0.7, 0.3, 0.8, 0.0, 1));
 	int n_frames = 500;
 	MyFloat seconds_per_frame = 0.02;
 	time_t time_start, time_end;

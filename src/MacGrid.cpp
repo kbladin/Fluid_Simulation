@@ -95,11 +95,9 @@ MyFloat MacGrid::velYInterpolated(MyFloat x, MyFloat y) const
 
 CellType MacGrid::cellType(int i, int j) const
 {
-	// Outside it is always SOLID
-	//bool i_outside = i < 0 ? true : (i > _SIZE_X - 1 ? true : false);
-	//bool j_outside = j < 0 ? true : (j > _SIZE_Y - 1 ? true : false);
-	//bool boundary = i_outside || j_outside;
-	return _cell_type_buffer.value(i, j);
+    i = CLAMP(i, 0, _SIZE_X - 1);
+    j = CLAMP(j, 0, _SIZE_Y - 1);
+    return _cell_type_buffer.value(i, j);
 }
 
 MyFloat MacGrid::divVelX(int i, int j) const

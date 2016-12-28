@@ -179,7 +179,7 @@ void FluidDomain::classifyCells(MarkerParticleSet& particle_set)
 		// Find the particles position in the grid
 		int x = (it->posX() / _mac_grid.lengthX()) * _mac_grid.sizeX();
 		int y = (it->posY() / _mac_grid.lengthY()) * _mac_grid.sizeY();
-
+        
 		_mac_grid.setCellType(x, y, LIQUID);
 	}
 	// Reset border (ugly hack)

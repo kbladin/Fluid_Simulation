@@ -34,7 +34,7 @@ void FluidSolver::step(FluidDomain& fluid_domain, MyFloat dt)
 	// Solve boundary condition again due to numerical errors in previous step
 	enforceDirichlet(fluid_domain.macGrid());
 	// Extend velocities outside of liquid cells so that liquid can flow
-	extendVelocity(fluid_domain.macGrid());
+	//extendVelocity(fluid_domain.macGrid());
 }
 
 void FluidSolver::addExternalForce(FluidDomain& fluid_domain, MyFloat F_x, MyFloat F_y, MyFloat dt)
@@ -114,6 +114,9 @@ void FluidSolver::pressureSolve(
 			}
 		}
 	}
+    if (n_fluid_cells == 0) {
+        return;
+    }
 /*
 	// Loop through all particles
 	for (auto it = particle_set.begin(); it != particle_set.end(); it++)
@@ -136,7 +139,7 @@ void FluidSolver::pressureSolve(
 	{
 		for (int i = 0; i < mac_grid.sizeX(); ++i)
 		{
-			if (mac_grid.cellType(i, j) == LIQUID)
+			if (_fluid_indices(i, j) != -1)
 			{
 				int idx = _fluid_indices(i, j);
 				int n_non_solid_neighbors = 0;
@@ -189,16 +192,16 @@ void FluidSolver::pressureSolve(
 			int idx_i_minus1 = _fluid_indices(i - 1, j);
 			int idx_j_minus1 = _fluid_indices(i, j - 1);
 			
-			if (idx > 0)
+			if (idx >= 0 || idx_i_minus1 >= 0 || idx_j_minus1 >= 0)
 			{
 				// UGLY SOLUTION TO VOLUME LOSS HERE!!
 				// MAKE PRESSURE PROPORTIONAL TO NUMBER OF PARTICLES
 				//MyFloat k = 0;
+                
+				MyFloat p = idx >= 0 ? x(idx) : 0;
 
-				MyFloat p = x(idx);// + k * _n_particles(i,j); // Pressure
-
-				MyFloat p_i_minus1 = idx_i_minus1 > 0 ? x(idx_i_minus1)/* + k * _n_particles(i-1,j)*/ : 0;
-				MyFloat p_j_minus1 = idx_j_minus1 > 0 ? x(idx_j_minus1)/* + k * _n_particles(i,j-1)*/ : 0;
+				MyFloat p_i_minus1 = idx_i_minus1 >= 0 ? x(idx_i_minus1) : 0;
+				MyFloat p_j_minus1 = idx_j_minus1 >= 0 ? x(idx_j_minus1) : 0;
 
 				// Get Pressure difference in x and y dimension
 				MyFloat pressure_diff_x = p - p_i_minus1;
@@ -244,7 +247,7 @@ void FluidSolver::extendVelocity(MacGrid& mac_grid)
         }
     }
 
-    int iterations = 3;
+    int iterations = 2;
     for (int iter = 0; iter < iterations; ++iter)
     {
         for (int j = 0; j < mac_grid.sizeY(); ++j)
@@ -297,7 +300,7 @@ void FluidSolver::extendVelocity(MacGrid& mac_grid)
             }
         }
         // Swap valid mask
-        Grid<int>* tmp = &_valid_mask;
+        Grid<char>* tmp = &_valid_mask;
         _valid_mask = std::move(_valid_mask_back_buffer);
         _valid_mask_back_buffer = std::move(*tmp);
     }
