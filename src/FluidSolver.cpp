@@ -34,7 +34,7 @@ void FluidSolver::step(FluidDomain& fluid_domain, MyFloat dt)
 	// Solve boundary condition again due to numerical errors in previous step
 	enforceDirichlet(fluid_domain.macGrid());
 	// Extend velocities outside of liquid cells so that liquid can flow
-	//extendVelocity(fluid_domain.macGrid());
+	extendVelocity(fluid_domain.macGrid());
 }
 
 void FluidSolver::addExternalForce(FluidDomain& fluid_domain, MyFloat F_x, MyFloat F_y, MyFloat dt)
@@ -129,9 +129,9 @@ void FluidSolver::pressureSolve(
 	}
 */
 	// Allocate matrix in which to store discrete laplacian
-    Eigen::SparseMatrix<MyFloat> A(n_fluid_cells, n_fluid_cells);
-    //A.reserve(Eigen::VectorXi::Constant(5, n_fluid_cells));
-	// Vector containing divergence
+    A.resize(n_fluid_cells, n_fluid_cells);
+    A.reserve(Eigen::VectorXi::Constant(5, n_fluid_cells));
+    // Vector containing divergence
 	VectorX b(n_fluid_cells);
 
 	// Loop through all cells
@@ -230,20 +230,18 @@ void FluidSolver::extendVelocity(MacGrid& mac_grid)
     {
         for (int i = 0; i < mac_grid.sizeX(); ++i)
         {
-        	if(mac_grid.cellType(i, j) == LIQUID)
+        	if(mac_grid.cellType(i, j) == LIQUID || mac_grid.cellType(i + 1, j) == LIQUID || mac_grid.cellType(i, j + 1) == LIQUID)
         	{
-        		_valid_mask(i,j) = 1;
-        		_valid_mask_back_buffer(i,j) = 1;
-				mac_grid.setVelXBackBufferHalfIndexed(i, j, mac_grid.velXHalfIndexed(i, j));
-				mac_grid.setVelYBackBufferHalfIndexed(i, j, mac_grid.velYHalfIndexed(i, j));
+                _valid_mask(i,j) = 1;
+                _valid_mask_back_buffer(i,j) = 1;
         	}
         	else
         	{
         		_valid_mask(i,j) = 0;
 				_valid_mask_back_buffer(i,j) = 0;
-				mac_grid.setVelXBackBufferHalfIndexed(i, j, 0);
-				mac_grid.setVelYBackBufferHalfIndexed(i, j, 0);
         	}
+            mac_grid.setVelXBackBufferHalfIndexed(i, j, mac_grid.velXHalfIndexed(i, j));
+            mac_grid.setVelYBackBufferHalfIndexed(i, j, mac_grid.velYHalfIndexed(i, j));
         }
     }
 

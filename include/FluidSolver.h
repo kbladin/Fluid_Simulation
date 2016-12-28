@@ -64,6 +64,8 @@ private:
 	//Grid<int> _n_particles;
 	Grid<char> _valid_mask;
 	Grid<char> _valid_mask_back_buffer;
+    Eigen::SparseMatrix<MyFloat> A;
+
 	const int _SIZE_X, _SIZE_Y;
 };
 

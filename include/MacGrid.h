@@ -30,7 +30,9 @@ public:
 	MyFloat velYHalfIndexed(int i, int j) const;
 	MyFloat velXBackBufferHalfIndexed(int i, int j) const;
 	MyFloat velYBackBufferHalfIndexed(int i, int j) const;
-	MyFloat velXInterpolated(MyFloat x, MyFloat y) const;
+    MyFloat velXBackBuffer(int i, int j) const;
+    MyFloat velYBackBuffer(int i, int j) const;
+    MyFloat velXInterpolated(MyFloat x, MyFloat y) const;
 	MyFloat velYInterpolated(MyFloat x, MyFloat y) const;
 	MyFloat divVelX(int i, int j) const;
 	MyFloat divVelY(int i, int j) const;

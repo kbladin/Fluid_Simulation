@@ -9,7 +9,7 @@
 #include <string>
 #include <time.h>
 
-static const int GRID_SIZE = 40;
+static const int GRID_SIZE = 20;
 static const int WORLD_SIZE = 1;
 
 int main(int argc, char const *argv[])
@@ -20,8 +20,10 @@ int main(int argc, char const *argv[])
 	Canvas canvas(400, 400);
 
 	// Setup
-	fluid_domain.addFluidSource(FluidSource(0.3, 0.7, 0.3, 0.8, 0.0, 1));
-	int n_frames = 500;
+    fluid_domain.addFluidSource(FluidSource(1.0 / GRID_SIZE, 0.1, 1.0 / GRID_SIZE, 1 - 1.0 / GRID_SIZE, 0.0, 1));
+    fluid_domain.addFluidSource(FluidSource(0.9, 1.0 - 1.0 / GRID_SIZE, 1.0 / GRID_SIZE, 1 - 1.0 / GRID_SIZE, 0.0, 1));
+    //fluid_domain.addFluidSource(FluidSource(0.4, 0.6, 0.1, 0.5, 2.0, 3));
+    int n_frames = 500;
 	MyFloat seconds_per_frame = 0.02;
 	time_t time_start, time_end;
 	time(&time_start);

@@ -74,6 +74,17 @@ MyFloat MacGrid::velXBackBufferHalfIndexed(int i, int j) const
 	return _vel_x_back_buffer.value(i,j);
 }
 
+MyFloat MacGrid::velXBackBuffer(int i, int j) const
+{
+    return (_vel_x_back_buffer.value(i,j) + _vel_x_back_buffer.value(i + 1,j)) / 2;
+}
+
+
+MyFloat MacGrid::velYBackBuffer(int i, int j) const
+{
+    return (_vel_y_back_buffer.value(i,j) + _vel_y_back_buffer.value(i + 1,j)) / 2;
+}
+
 MyFloat MacGrid::velYHalfIndexed(int i, int j) const
 {
 	return _vel_y_front_buffer.value(i,j);
