@@ -11,7 +11,7 @@
 
 Example:
 
-![](images/water_particles.gif "Water Simulation With Marker Particles")
+![](images/water.gif "Water Simulation With Marker Particles")
 
 ## Not Yet Implemented
 * Adaptive time steps
