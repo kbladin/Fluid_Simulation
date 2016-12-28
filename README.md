@@ -9,7 +9,8 @@
 * Marker particles for air/fluid separation
 * Velocity extension
 
-Example simulations:
+Example:
+
 ![](images/water_particles.gif "Water Simulation With Marker Particles")
 
 ## Not Yet Implemented
