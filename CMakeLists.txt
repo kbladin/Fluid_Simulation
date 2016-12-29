@@ -46,8 +46,8 @@ target_link_libraries(${PROJECT_NAME}
 	${PROJECT_NAME}_lib
 	)
 # C++11 compatability
-set_target_properties(${PROJECT_NAME}_lib PROPERTIES COMPILE_FLAGS "-std=c++11")
-set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS "-std=c++11")
+set_target_properties(${PROJECT_NAME}_lib PROPERTIES COMPILE_FLAGS "-std=c++14")
+set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS "-std=c++14")
 
 
 #LDFLAGS:  -L/usr/local/opt/superlu43/lib

@@ -9,7 +9,7 @@
 #include <string>
 #include <time.h>
 
-static const int GRID_SIZE = 20;
+static const int GRID_SIZE = 40;
 static const int WORLD_SIZE = 1;
 
 int main(int argc, char const *argv[])
@@ -20,9 +20,9 @@ int main(int argc, char const *argv[])
 	Canvas canvas(400, 400);
 
 	// Setup
-    fluid_domain.addFluidSource(FluidSource(1.0 / GRID_SIZE, 0.1, 1.0 / GRID_SIZE, 1 - 1.0 / GRID_SIZE, 0.0, 1));
-    fluid_domain.addFluidSource(FluidSource(0.9, 1.0 - 1.0 / GRID_SIZE, 1.0 / GRID_SIZE, 1 - 1.0 / GRID_SIZE, 0.0, 1));
-    //fluid_domain.addFluidSource(FluidSource(0.4, 0.6, 0.1, 0.5, 2.0, 3));
+    fluid_domain.addFluidSource(FluidSource(1.0 / GRID_SIZE, 0.2, 1.0 / GRID_SIZE, 1 - 1.0 / GRID_SIZE, 0.0, 1));
+    fluid_domain.addFluidSource(FluidSource(0.4, 0.6, 0.1, 0.4, 2.0, 4));
+    //fluid_domain.addFluidSource(FluidSource(0.45, 0.55, 0.1, 0.2, 0.0, 1));
     int n_frames = 500;
 	MyFloat seconds_per_frame = 0.02;
 	time_t time_start, time_end;
@@ -31,7 +31,7 @@ int main(int argc, char const *argv[])
 	// Start simulation
 	for (int i = 0; i < n_frames; ++i)
 	{
-		std::cout << "iteration " << i << std::endl;
+		std::cout << "frame " << i << std::endl;
 
 		MyFloat dt;
 		// Simulate
@@ -39,11 +39,7 @@ int main(int argc, char const *argv[])
 		{
 			// Calculate dt (for now just set it)
 			dt = 0.0005;
-
-			if (dt > seconds_per_frame - frame_time)
-			{
-				dt = seconds_per_frame - frame_time;
-			}
+            dt = CLAMP(dt, 0, seconds_per_frame - frame_time);
 
 			// Solve
 			fluid_solver.step(fluid_domain, dt);

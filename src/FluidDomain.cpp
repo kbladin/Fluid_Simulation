@@ -182,7 +182,7 @@ void FluidDomain::classifyCells(MarkerParticleSet& particle_set)
         
 		_mac_grid.setCellType(x, y, LIQUID);
 	}
-	// Reset border (ugly hack)
+	// Reset border (ugly)
     for (int j = 0; j < _mac_grid.sizeY(); ++j)
     {
         for (int i = 0; i < _mac_grid.sizeX(); ++i)

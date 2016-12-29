@@ -7,7 +7,7 @@ FluidSolver::FluidSolver(int size_x, int size_y)
 , _SIZE_X(size_x)
 , _SIZE_Y(size_y)
 {
-	_cg_solver.setMaxIterations(10);
+	_cg_solver.setMaxIterations(15);
 }
 
 FluidSolver::~FluidSolver()
@@ -24,17 +24,17 @@ void FluidSolver::step(FluidDomain& fluid_domain, MyFloat dt)
 	advectVelocitySemiLagrangian(fluid_domain.macGrid(), dt);
 	// Add external force
 	addExternalAcceleration(fluid_domain.macGrid(), 0, 9.82, dt);
-	// Solve boundary condition
+    // Solve boundary condition
 	enforceDirichlet(fluid_domain.macGrid());
 	// Ensure divergence free
 	pressureSolve(
 		fluid_domain.macGrid(),
 		fluid_domain.markerParticleSet(),
 		fluid_domain.density());
-	// Solve boundary condition again due to numerical errors in previous step
-	enforceDirichlet(fluid_domain.macGrid());
-	// Extend velocities outside of liquid cells so that liquid can flow
-	extendVelocity(fluid_domain.macGrid());
+    // Solve boundary condition again due to numerical errors in previous step
+    enforceDirichlet(fluid_domain.macGrid());
+    // Extend velocities outside of liquid cells so that liquid can flow
+    extendVelocity(fluid_domain.macGrid());
 }
 
 void FluidSolver::addExternalForce(FluidDomain& fluid_domain, MyFloat F_x, MyFloat F_y, MyFloat dt)
@@ -230,7 +230,7 @@ void FluidSolver::extendVelocity(MacGrid& mac_grid)
     {
         for (int i = 0; i < mac_grid.sizeX(); ++i)
         {
-        	if(mac_grid.cellType(i, j) == LIQUID || mac_grid.cellType(i + 1, j) == LIQUID || mac_grid.cellType(i, j + 1) == LIQUID)
+        	if(mac_grid.cellType(i, j) == LIQUID)
         	{
                 _valid_mask(i,j) = 1;
                 _valid_mask_back_buffer(i,j) = 1;
@@ -245,7 +245,7 @@ void FluidSolver::extendVelocity(MacGrid& mac_grid)
         }
     }
 
-    int iterations = 2;
+    int iterations = 3;
     for (int iter = 0; iter < iterations; ++iter)
     {
         for (int j = 0; j < mac_grid.sizeY(); ++j)
@@ -259,30 +259,30 @@ void FluidSolver::extendVelocity(MacGrid& mac_grid)
 	            	int n_valid_neighbors = 0;
 
 	            	// Get values of all neighbors
-	            	if(_valid_mask.value(i-1, j) == 1)
-	            	{
-	            		new_vel_x += mac_grid.velXBackBufferHalfIndexed(i-1, j);
-	            		new_vel_y += mac_grid.velYBackBufferHalfIndexed(i-1, j);
-	            		n_valid_neighbors++;
-	            	}
-	            	if(_valid_mask.value(i+1, j) == 1)
-	            	{
-	            		new_vel_x += mac_grid.velXBackBufferHalfIndexed(i+1, j);
-	            		new_vel_y += mac_grid.velYBackBufferHalfIndexed(i+1, j);
-	            		n_valid_neighbors++;
-	            	}
-	            	if(_valid_mask.value(i, j-1) == 1)
-	            	{
-	            		new_vel_x += mac_grid.velXBackBufferHalfIndexed(i, j-1);
-	            		new_vel_y += mac_grid.velYBackBufferHalfIndexed(i, j-1);
-	            		n_valid_neighbors++;
-	            	}
-	            	if(_valid_mask.value(i, j+1) == 1)
-	            	{
-	            		new_vel_x += mac_grid.velXBackBufferHalfIndexed(i, j+1);
-	            		new_vel_y += mac_grid.velYBackBufferHalfIndexed(i, j+1);
-	            		n_valid_neighbors++;
-	            	}
+                    if(_valid_mask.value(i-1, j) == 1)
+                    {
+                        new_vel_x += mac_grid.velXBackBuffer(i-1, j);
+                        new_vel_y += mac_grid.velYBackBuffer(i-1, j);
+                        n_valid_neighbors++;
+                    }
+                    if(_valid_mask.value(i, j-1) == 1)
+                    {
+                        new_vel_x += mac_grid.velXBackBuffer(i, j-1);
+                        new_vel_y += mac_grid.velYBackBuffer(i, j-1);
+                        n_valid_neighbors++;
+                    }
+                    if(_valid_mask.value(i, j+1) == 1)
+                    {
+                        new_vel_x += mac_grid.velXBackBuffer(i, j+1);
+                        new_vel_y += mac_grid.velYBackBuffer(i, j+1);
+                        n_valid_neighbors++;
+                    }
+                    if(_valid_mask.value(i+1, j) == 1)
+                    {
+                        new_vel_x += mac_grid.velXBackBuffer(i+1, j);
+                        new_vel_y += mac_grid.velYBackBuffer(i+1, j);
+                        n_valid_neighbors++;
+                    }
 
 	            	// Average the value for the current cell
 	            	if (n_valid_neighbors > 0)
@@ -290,11 +290,56 @@ void FluidSolver::extendVelocity(MacGrid& mac_grid)
 	            		new_vel_x /= n_valid_neighbors;
 	            		new_vel_y /= n_valid_neighbors;
 
-	            		mac_grid.setVelXBackBufferHalfIndexed(i, j, new_vel_x);
-						mac_grid.setVelYBackBufferHalfIndexed(i, j, new_vel_y);
+	            		mac_grid.setVelXBackBuffer(i, j, new_vel_x);
+						mac_grid.setVelYBackBuffer(i, j, new_vel_y);
 	            		_valid_mask_back_buffer(i, j) = 1;
 	            	}
             	}
+                /*
+                if (_valid_mask.value(i, j) == 0 && mac_grid.cellType(i, j) != SOLID)
+                {
+                    MyFloat new_vel_x = 0;
+                    MyFloat new_vel_y = 0;
+                    int n_valid_neighbors = 0;
+                    
+                    // Get values of all neighbors
+                    if(_valid_mask.value(i-1, j) == 1)
+                    {
+                        new_vel_x += mac_grid.velXBackBufferHalfIndexed(i-1, j);
+                        new_vel_y += mac_grid.velYBackBufferHalfIndexed(i-1, j);
+                        n_valid_neighbors++;
+                    }
+                    if(_valid_mask.value(i+1, j) == 1)
+                    {
+                        new_vel_x += mac_grid.velXBackBufferHalfIndexed(i+1, j);
+                        new_vel_y += mac_grid.velYBackBufferHalfIndexed(i+1, j);
+                        n_valid_neighbors++;
+                    }
+                    if(_valid_mask.value(i, j-1) == 1)
+                    {
+                        new_vel_x += mac_grid.velXBackBufferHalfIndexed(i, j-1);
+                        new_vel_y += mac_grid.velYBackBufferHalfIndexed(i, j-1);
+                        n_valid_neighbors++;
+                    }
+                    if(_valid_mask.value(i, j+1) == 1)
+                    {
+                        new_vel_x += mac_grid.velXBackBufferHalfIndexed(i, j+1);
+                        new_vel_y += mac_grid.velYBackBufferHalfIndexed(i, j+1);
+                        n_valid_neighbors++;
+                    }
+                    
+                    // Average the value for the current cell
+                    if (n_valid_neighbors > 0)
+                    {
+                        new_vel_x /= n_valid_neighbors;
+                        new_vel_y /= n_valid_neighbors;
+                        
+                        mac_grid.setVelXBackBufferHalfIndexed(i, j, new_vel_x);
+                        mac_grid.setVelYBackBufferHalfIndexed(i, j, new_vel_y);
+                        _valid_mask_back_buffer(i, j) = 1;
+                    }
+                }*/
+
             }
         }
         // Swap valid mask

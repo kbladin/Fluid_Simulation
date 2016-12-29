@@ -5,7 +5,7 @@
 
 #define CLAMP(x, low, high) (x < low ? low : (x > high ? high : x))
 
-#define USE_DOUBLE_PRECISION
+//#define USE_DOUBLE_PRECISION
 #ifdef USE_DOUBLE_PRECISION
 typedef double MyFloat;
 typedef Eigen::VectorXd VectorX;
