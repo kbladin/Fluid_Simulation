@@ -46,6 +46,7 @@ int main(int argc, char const *argv[])
 			fluid_domain.update(dt);
 
 			// Solve
+			//fluid_solver.stepSemiLagrangian(fluid_domain, dt);
 			fluid_solver.stepPICFLIP(fluid_domain, dt, 0.02);
 		}
 		// Render
