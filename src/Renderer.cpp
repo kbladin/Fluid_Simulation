@@ -108,9 +108,9 @@ void Renderer::renderGridVelocitiesToCanvas(const MacGrid& grid, Canvas& canvas)
 
 	MyFloat line_scale = 5;
 	// Render all velocities as lines
-	for (int j = 0; j < grid_size_y; ++j)
+	for (int j = 0; j < grid_size_y - 1; ++j)
 	{
-		for (int i = 0; i < grid_size_x; ++i)
+		for (int i = 0; i < grid_size_x - 1; ++i)
 		{
             MyFloat vel_x = grid.velX(i, j);
             MyFloat vel_y = grid.velY(i, j);

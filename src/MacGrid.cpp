@@ -13,9 +13,12 @@ MacGrid::MacGrid(
 	_DELTA_X(length_x / size_x),
 	_DELTA_Y(length_y / size_y),
 
-    _cell_type_buffer(	size_x, size_y)
+    _vel_x_previous(size_x, size_y, _DELTA_Y, _DELTA_Y),
+    _vel_y_previous(size_x, size_y, _DELTA_Y, _DELTA_Y),
+    _vel_x_diff(size_x, size_y, _DELTA_Y, _DELTA_Y),
+    _vel_y_diff(size_x, size_y, _DELTA_Y, _DELTA_Y),
+    _cell_type_buffer(size_x, size_y)
 {
-    
     _vel_x_front_buffer = std::make_unique< SizedGrid<MyFloat> >(size_x, size_y, _DELTA_X, _DELTA_Y);
     _vel_y_front_buffer = std::make_unique< SizedGrid<MyFloat> >(size_x, size_y, _DELTA_X, _DELTA_Y);
     _vel_x_back_buffer = std::make_unique< SizedGrid<MyFloat> >(size_x, size_y, _DELTA_X, _DELTA_Y);
@@ -45,6 +48,24 @@ void MacGrid::clearCellTypeBuffer()
 		for (int i = 1; i < _SIZE_X - 1; ++i)
 		{
 			_cell_type_buffer(i, j) = AIR;
+		}
+	}
+}
+
+void MacGrid::updatePreviousVelocityBuffer()
+{
+	_vel_x_previous = *_vel_x_front_buffer;
+    _vel_y_previous = *_vel_y_front_buffer;
+}
+
+void MacGrid::updateVelocityDiffBuffer()
+{
+	for (int j = 0; j < _SIZE_Y; ++j)
+	{
+		for (int i = 0; i < _SIZE_X; ++i)
+		{
+			_vel_x_diff(i, j) = _vel_x_front_buffer->value(i, j) - _vel_x_previous.value(i, j);
+			_vel_y_diff(i, j) = _vel_y_front_buffer->value(i, j) - _vel_y_previous.value(i, j);
 		}
 	}
 }

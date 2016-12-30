@@ -22,7 +22,9 @@ public:
 	MacGrid(int size_x, int size_y, MyFloat length_x, MyFloat length_y);
 	~MacGrid();
 
-	void clearCellTypeBuffer();
+    void clearCellTypeBuffer();
+    void updatePreviousVelocityBuffer();
+    void updateVelocityDiffBuffer();
 
 	// Getters
     inline MyFloat velX(int i, int j) const
@@ -68,6 +70,18 @@ public:
 	inline MyFloat velYInterpolated(MyFloat x, MyFloat y) const
     {
         MyFloat v_y = _vel_y_front_buffer->valueInterpolated(x - _DELTA_X * 0.5, y);
+        // -0.5 Due to the MAC grid structure
+        return v_y;
+    };
+    inline MyFloat velXDiffInterpolated(MyFloat x, MyFloat y) const
+    {
+        MyFloat v_x = _vel_x_diff.valueInterpolated(x, y - _DELTA_Y * 0.5);
+        // -0.5 Due to the MAC grid structure
+        return v_x;
+    };
+    inline MyFloat velYDiffInterpolated(MyFloat x, MyFloat y) const
+    {
+        MyFloat v_y = _vel_y_diff.valueInterpolated(x - _DELTA_X * 0.5, y);
         // -0.5 Due to the MAC grid structure
         return v_y;
     };
@@ -159,6 +173,12 @@ private:
 
 	std::unique_ptr< SizedGrid<MyFloat> > _vel_x_back_buffer;
 	std::unique_ptr< SizedGrid<MyFloat> > _vel_y_back_buffer;
+
+    SizedGrid<MyFloat> _vel_x_previous;
+    SizedGrid<MyFloat> _vel_y_previous;
+
+    SizedGrid<MyFloat> _vel_x_diff;
+    SizedGrid<MyFloat> _vel_y_diff;
 
 	Grid<CellType> _cell_type_buffer;
 };

@@ -15,13 +15,14 @@ static const int WORLD_SIZE = 1;
 int main(int argc, char const *argv[])
 {
 	FluidDomain fluid_domain(GRID_SIZE, GRID_SIZE, WORLD_SIZE, WORLD_SIZE);
-	FluidSolver fluid_solver(GRID_SIZE, GRID_SIZE);
+	FluidSolver fluid_solver(GRID_SIZE, GRID_SIZE, float(WORLD_SIZE) / GRID_SIZE, float(WORLD_SIZE) / GRID_SIZE);
 	Renderer renderer(0,0, WORLD_SIZE, WORLD_SIZE);
 	Canvas canvas(400, 400);
 
 	// Setup
-    fluid_domain.addFluidSource(FluidSource(1.0 / GRID_SIZE, 0.2, 1.0 / GRID_SIZE, 1 - 1.0 / GRID_SIZE, 0.0, 1));
-    fluid_domain.addFluidSource(FluidSource(0.4, 0.6, 0.1, 0.4, 2.0, 4));
+    //fluid_domain.addFluidSource(FluidSource(1.0 / GRID_SIZE, 0.3, 1.0 / GRID_SIZE, 1 - 1.0 / GRID_SIZE, 0.0, 1));
+    fluid_domain.addFluidSource(FluidSource(1.0 / GRID_SIZE, 0.2, 0.1, 0.4, 1.5, 5));
+    fluid_domain.addFluidSource(FluidSource(0.8, 1.0 - 1.0 / GRID_SIZE, 0.1, 0.4, 1.5, 5));
     //fluid_domain.addFluidSource(FluidSource(0.45, 0.55, 0.1, 0.2, 0.0, 1));
     int n_frames = 500;
 	MyFloat seconds_per_frame = 0.02;
@@ -41,11 +42,11 @@ int main(int argc, char const *argv[])
 			dt = 0.0005;
             dt = CLAMP(dt, 0, seconds_per_frame - frame_time);
 
-			// Solve
-			fluid_solver.step(fluid_domain, dt);
-
 			// Update fluid domain
 			fluid_domain.update(dt);
+
+			// Solve
+			fluid_solver.stepPICFLIP(fluid_domain, dt, 0.0);
 		}
 		// Render
 		renderer.clearCanvas(canvas);

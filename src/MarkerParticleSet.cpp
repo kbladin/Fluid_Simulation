@@ -1,38 +1,30 @@
 #include <MarkerParticleSet.h>
 
-MarkerParticle::MarkerParticle()
+MarkerParticle::MarkerParticle() :
+	_pos_x(0),
+	_pos_y(0),
+	_vel_x(0),
+	_vel_y(0)
 {
-	_pos_x = 0;
-	_pos_y = 0;
+
 }
 
-MarkerParticle::MarkerParticle(MyFloat pos_x, MyFloat pos_y)
+MarkerParticle::MarkerParticle(
+	MyFloat pos_x,
+	MyFloat pos_y,
+	MyFloat vel_x,
+	MyFloat vel_y) :
+	_pos_x(pos_x),
+	_pos_y(pos_y),
+	_vel_x(vel_x),
+	_vel_y(vel_y)
 {
-	_pos_x = pos_x;
-	_pos_y = pos_y;
+
 }
 
 MarkerParticle::~MarkerParticle()
 {
 	
-}
-
-// Getters
-MyFloat MarkerParticle::posX() const
-{
-	return _pos_x;
-}
-
-MyFloat MarkerParticle::posY() const
-{
-	return _pos_y;
-}
-
-// Setters
-void MarkerParticle::setPosition(MyFloat pos_x, MyFloat pos_y)
-{
-	_pos_x = pos_x;
-	_pos_y = pos_y;
 }
 
 MarkerParticleSet::MarkerParticleSet(int size)
@@ -50,22 +42,15 @@ void MarkerParticleSet::addParticle(MyFloat pos_x, MyFloat pos_y)
 	_particles.push_back(MarkerParticle(pos_x, pos_y));
 }
 
-MarkerParticleSet::iterator MarkerParticleSet::begin()
+void MarkerParticleSet::reserve(int particle_count)
 {
-	return _particles.begin();
+	_particles.reserve(particle_count);
 }
 
-MarkerParticleSet::iterator MarkerParticleSet::end()
+void MarkerParticleSet::advect(MyFloat dt)
 {
-	return _particles.end();
-}
-
-MarkerParticleSet::const_iterator MarkerParticleSet::begin() const
-{
-	return _particles.begin();
-}
-
-MarkerParticleSet::const_iterator MarkerParticleSet::end() const
-{
-	return _particles.end();
+	for (auto it = _particles.begin(); it != _particles.end(); it++)
+	{
+		it->advect(dt);
+	}
 }

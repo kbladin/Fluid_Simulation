@@ -9,15 +9,15 @@ FluidSource::FluidSource(
 	MyFloat y_min,
 	MyFloat y_max,
 	MyFloat time_step,
-	int max_creations)
+	int max_spawns)
 	: _x_min(x_min)
 	, _x_max(x_max)
 	, _y_min(y_min)
 	, _y_max(y_max)
 	, _time_step(time_step)
 	, _time_since_last(0.0)
-	, _max_creations(max_creations)
-	, _n_creations(0)
+	, _max_spawns(max_spawns)
+	, _n_spawns(0)
 {
 
 }
@@ -34,8 +34,8 @@ void FluidSource::update(MarkerParticleSet& particle_set, MyFloat dt)
 
 	if (_time_since_last >= _time_step)
 	{
-		MyFloat x_incr = 1.0 / 40.0 / 4.0;
-		MyFloat y_incr = 1.0 / 40.0 / 4.0;
+		MyFloat x_incr = 1.0 / 40.0 / 3.0;
+		MyFloat y_incr = 1.0 / 40.0 / 3.0;
 		for (MyFloat y = _y_min; y < _y_max; y += y_incr)
 		{
 			for (MyFloat x = _x_min; x < _x_max; x += x_incr)
@@ -45,14 +45,14 @@ void FluidSource::update(MarkerParticleSet& particle_set, MyFloat dt)
 		}
 
 		_time_since_last = 0;
-		_n_creations++;
+		_n_spawns++;
 	}
 	_time_since_last += dt;
 }
 
 bool FluidSource::isFinished()
 {
-	return _max_creations != -1 && _n_creations >= _max_creations;
+	return _max_spawns != -1 && _n_spawns >= _max_spawns;
 }
 
 static const int N_PARTICLES = 0;
@@ -94,17 +94,9 @@ void FluidDomain::update(MyFloat dt)
 	{
 		_fluid_sources[i].update(_particle_set, dt);
 	}
-
-	// Advect the fluid through the newly updated field
-	advectParticles(dt);
-	//fluid_domain.advectLevelSet(dt);
-
-	// Classify the cells of the domain (AIR, LIQUID or SOLID)
-	classifyCells(_particle_set);
-	//fluid_domain.classifyCells(_level_set);
 }
 
-void FluidDomain::advectParticles(MyFloat dt)
+void FluidDomain::advectParticlesWithGrid(MyFloat dt)
 {
 	for (auto it = _particle_set.begin(); it != _particle_set.end(); it++)
 	{

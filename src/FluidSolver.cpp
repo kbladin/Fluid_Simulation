@@ -1,13 +1,21 @@
 #include <FluidSolver.h>
 
-FluidSolver::FluidSolver(int size_x, int size_y)
+FluidSolver::FluidSolver(int size_x, int size_y, MyFloat delta_x, MyFloat delta_y)
 : _fluid_indices(size_x, size_y)
-, _valid_mask(size_x, size_y)
-, _valid_mask_back_buffer(size_x, size_y)
+, _valid_mask_x(size_x, size_y)
+, _valid_mask_x_back_buffer(size_x, size_y)
+, _valid_mask_y(size_x, size_y)
+, _valid_mask_y_back_buffer(size_x, size_y)
+, _vel_x_sum(size_x, size_y, delta_x, delta_y)
+, _vel_y_sum(size_x, size_y, delta_x, delta_y)
+, _weight_vel_x_sum(size_x, size_y, delta_x, delta_y)
+, _weight_vel_y_sum(size_x, size_y, delta_x, delta_y)
 , _SIZE_X(size_x)
 , _SIZE_Y(size_y)
+, _DELTA_X(delta_x)
+, _DELTA_Y(delta_y)
 {
-	_cg_solver.setMaxIterations(15);
+	_cg_solver.setMaxIterations(10);
 }
 
 FluidSolver::~FluidSolver()
@@ -15,10 +23,12 @@ FluidSolver::~FluidSolver()
 
 }
 
-void FluidSolver::step(FluidDomain& fluid_domain, MyFloat dt)
+void FluidSolver::stepSemiLagrangian(FluidDomain& fluid_domain, MyFloat dt)
 {
 	assert(fluid_domain.macGrid().sizeX() == _SIZE_X);
 	assert(fluid_domain.macGrid().sizeY() == _SIZE_Y);
+	// Classify the cells of the domain (AIR, LIQUID or SOLID)
+	fluid_domain.classifyCells(fluid_domain.markerParticleSet());
 	// Self advection
 	// (should be done on a divergence free field, therefore done first)
 	advectVelocitySemiLagrangian(fluid_domain.macGrid(), dt);
@@ -26,15 +36,118 @@ void FluidSolver::step(FluidDomain& fluid_domain, MyFloat dt)
 	addExternalAcceleration(fluid_domain.macGrid(), 0, 9.82, dt);
     // Solve boundary condition
 	enforceDirichlet(fluid_domain.macGrid());
-	// Ensure divergence free
+    // Ensure divergence free
 	pressureSolve(
 		fluid_domain.macGrid(),
 		fluid_domain.markerParticleSet(),
 		fluid_domain.density());
     // Solve boundary condition again due to numerical errors in previous step
     enforceDirichlet(fluid_domain.macGrid());
-    // Extend velocities outside of liquid cells so that liquid can flow
-    extendVelocity(fluid_domain.macGrid());
+	// Extend velocities outside of liquid cells so that liquid can flow
+    extendVelocity(fluid_domain.macGrid(), 2);
+	
+	// Advect the fluid through the newly updated field
+	fluid_domain.advectParticlesWithGrid(dt);
+}
+
+void FluidSolver::stepPIC(FluidDomain& fluid_domain, MyFloat dt)
+{
+	assert(fluid_domain.macGrid().sizeX() == _SIZE_X);
+	assert(fluid_domain.macGrid().sizeY() == _SIZE_Y);
+	assert(fluid_domain.macGrid().deltaX() == _DELTA_X);
+	assert(fluid_domain.macGrid().deltaY() == _DELTA_Y);
+
+	// Classify the cells of the domain (AIR, LIQUID or SOLID)
+	fluid_domain.classifyCells(fluid_domain.markerParticleSet());
+
+	// Transfer to grid
+	transferVelocityToGridSpread(fluid_domain.markerParticleSet(), fluid_domain.macGrid());
+	// Resolve forces on grid
+    addExternalAcceleration(fluid_domain.macGrid(), 0, 9.82, dt);
+    enforceDirichlet(fluid_domain.macGrid());
+	pressureSolve(
+		fluid_domain.macGrid(),
+		fluid_domain.markerParticleSet(),
+		fluid_domain.density());
+    
+    enforceDirichlet(fluid_domain.macGrid());
+    extendVelocity(fluid_domain.macGrid(), 2);
+
+    // Transfer to particles
+	transferVelocityToParticlesPIC(fluid_domain.macGrid(), fluid_domain.markerParticleSet());
+
+    // Advect
+	fluid_domain.markerParticleSet().advect(dt);
+}
+
+
+void FluidSolver::stepFLIP(FluidDomain& fluid_domain, MyFloat dt)
+{
+	assert(fluid_domain.macGrid().sizeX() == _SIZE_X);
+	assert(fluid_domain.macGrid().sizeY() == _SIZE_Y);
+	assert(fluid_domain.macGrid().deltaX() == _DELTA_X);
+	assert(fluid_domain.macGrid().deltaY() == _DELTA_Y);
+
+	// Classify the cells of the domain (AIR, LIQUID or SOLID)
+	fluid_domain.classifyCells(fluid_domain.markerParticleSet());
+
+	// Transfer to grid
+	transferVelocityToGridSpread(fluid_domain.markerParticleSet(), fluid_domain.macGrid());
+	fluid_domain.macGrid().updatePreviousVelocityBuffer();
+	// Resolve forces on grid
+    addExternalAcceleration(fluid_domain.macGrid(), 0, 9.82, dt);
+    enforceDirichlet(fluid_domain.macGrid());
+	pressureSolve(
+		fluid_domain.macGrid(),
+		fluid_domain.markerParticleSet(),
+		fluid_domain.density());
+    
+    enforceDirichlet(fluid_domain.macGrid());
+    //extendVelocity(fluid_domain.macGrid(), 2);
+
+    fluid_domain.macGrid().updateVelocityDiffBuffer();
+
+    // Transfer to particles
+	transferVelocityToParticlesFLIP(fluid_domain.macGrid(), fluid_domain.markerParticleSet());
+
+    // Advect
+	fluid_domain.markerParticleSet().advect(dt);
+}
+
+void FluidSolver::stepPICFLIP(FluidDomain& fluid_domain, MyFloat dt, MyFloat pic_ratio)
+{
+	assert(fluid_domain.macGrid().sizeX() == _SIZE_X);
+	assert(fluid_domain.macGrid().sizeY() == _SIZE_Y);
+	assert(fluid_domain.macGrid().deltaX() == _DELTA_X);
+	assert(fluid_domain.macGrid().deltaY() == _DELTA_Y);
+
+	// Classify the cells of the domain (AIR, LIQUID or SOLID)
+	fluid_domain.classifyCells(fluid_domain.markerParticleSet());
+
+	// Transfer to grid
+	transferVelocityToGridSpread(fluid_domain.markerParticleSet(), fluid_domain.macGrid());
+	fluid_domain.macGrid().updatePreviousVelocityBuffer();
+	// Resolve forces on grid
+	addExternalAcceleration(fluid_domain.macGrid(), 0, 9.82, dt);
+    enforceDirichlet(fluid_domain.macGrid());
+
+    extendVelocity(fluid_domain.macGrid(), 2);
+	pressureSolve(
+		fluid_domain.macGrid(),
+		fluid_domain.markerParticleSet(),
+		fluid_domain.density());
+    enforceDirichlet(fluid_domain.macGrid());
+
+    fluid_domain.macGrid().updateVelocityDiffBuffer();
+
+    // Transfer to particles
+	transferVelocityToParticlesPICFLIP(
+		fluid_domain.macGrid(),
+		fluid_domain.markerParticleSet(),
+		pic_ratio);
+
+    // Advect
+	fluid_domain.markerParticleSet().advect(dt);
 }
 
 void FluidSolver::addExternalForce(FluidDomain& fluid_domain, MyFloat F_x, MyFloat F_y, MyFloat dt)
@@ -79,14 +192,16 @@ void FluidSolver::enforceDirichlet(MacGrid& mac_grid)
 	for (int j = 0; j < mac_grid.sizeY(); ++j)
 	{
 		for (int i = 0; i < mac_grid.sizeX(); ++i)
-		{   
+        {
+            int i_minus1 = CLAMP(i - 1, 0, mac_grid.sizeX());
+            int j_minus1 = CLAMP(j - 1, 0, mac_grid.sizeY());
 			// X velocity
-			if(	(mac_grid.cellType(i - 1, j) == SOLID && mac_grid.velXHalfIndexed(i,j) < 0) ||
+			if(	(mac_grid.cellType(i_minus1, j) == SOLID && mac_grid.velXHalfIndexed(i,j) < 0) ||
 				(mac_grid.cellType(i, j)  == SOLID && mac_grid.velXHalfIndexed(i,j) > 0))
 				mac_grid.setVelXHalfIndexed(i, j, 0);
 			
 			// Y velocity
-			if(	(mac_grid.cellType(i, j - 1) == SOLID && mac_grid.velYHalfIndexed(i,j) < 0) ||
+			if(	(mac_grid.cellType(i, j_minus1) == SOLID && mac_grid.velYHalfIndexed(i,j) < 0) ||
 				(mac_grid.cellType(i, j) == SOLID && mac_grid.velYHalfIndexed(i,j) > 0))
 				mac_grid.setVelYHalfIndexed(i, j, 0);
 		}
@@ -130,7 +245,7 @@ void FluidSolver::pressureSolve(
 */
 	// Allocate matrix in which to store discrete laplacian
     A.resize(n_fluid_cells, n_fluid_cells);
-    A.reserve(Eigen::VectorXi::Constant(5, n_fluid_cells));
+    //A.reserve(Eigen::VectorXi::Constant(5, n_fluid_cells));
     // Vector containing divergence
 	VectorX b(n_fluid_cells);
 
@@ -189,8 +304,8 @@ void FluidSolver::pressureSolve(
 		{
 			// Calculate indices
 			int idx = _fluid_indices(i, j);
-			int idx_i_minus1 = _fluid_indices(i - 1, j);
-			int idx_j_minus1 = _fluid_indices(i, j - 1);
+			int idx_i_minus1 = _fluid_indices(CLAMP(i - 1, 0, mac_grid.sizeX() - 1), j);
+			int idx_j_minus1 = _fluid_indices(i, CLAMP(j - 1, 0, mac_grid.sizeY() - 1));
 			
 			if (idx >= 0 || idx_i_minus1 >= 0 || idx_j_minus1 >= 0)
 			{
@@ -224,128 +339,133 @@ void FluidSolver::pressureSolve(
 	mac_grid.swapBuffers();
 }
 
-void FluidSolver::extendVelocity(MacGrid& mac_grid)
+void FluidSolver::extendVelocity(MacGrid& mac_grid, int n_iterations)
 {
     for (int j = 0; j < mac_grid.sizeY(); ++j)
     {
         for (int i = 0; i < mac_grid.sizeX(); ++i)
         {
-        	if(mac_grid.cellType(i, j) == LIQUID)
+        	if(mac_grid.cellType(i, j) == LIQUID || mac_grid.cellType(i - 1, j) == LIQUID)
         	{
-                _valid_mask(i,j) = 1;
-                _valid_mask_back_buffer(i,j) = 1;
+                _valid_mask_x(i,j) = 1;
+                _valid_mask_x_back_buffer(i,j) = 1;
+	            mac_grid.setVelXBackBufferHalfIndexed(i, j, mac_grid.velXHalfIndexed(i, j));
+	            mac_grid.setVelXHalfIndexed(i, j, mac_grid.velXHalfIndexed(i, j));
         	}
         	else
         	{
-        		_valid_mask(i,j) = 0;
-				_valid_mask_back_buffer(i,j) = 0;
+        		_valid_mask_x(i,j) = 0;
+				_valid_mask_x_back_buffer(i,j) = 0;
+	            mac_grid.setVelXBackBufferHalfIndexed(i, j, 0);
+	            mac_grid.setVelXHalfIndexed(i, j, 0);
         	}
-            mac_grid.setVelXBackBufferHalfIndexed(i, j, mac_grid.velXHalfIndexed(i, j));
-            mac_grid.setVelYBackBufferHalfIndexed(i, j, mac_grid.velYHalfIndexed(i, j));
+
+        	if(mac_grid.cellType(i, j) == LIQUID || mac_grid.cellType(i, j - 1) == LIQUID)
+        	{
+                _valid_mask_y(i,j) = 1;
+                _valid_mask_y_back_buffer(i,j) = 1;
+	            mac_grid.setVelYBackBufferHalfIndexed(i, j, mac_grid.velYHalfIndexed(i, j));
+	            mac_grid.setVelYHalfIndexed(i, j, mac_grid.velYHalfIndexed(i, j));
+        	}
+        	else
+        	{
+        		_valid_mask_y(i,j) = 0;
+				_valid_mask_y_back_buffer(i,j) = 0;
+	            mac_grid.setVelYBackBufferHalfIndexed(i, j, 0);
+	            mac_grid.setVelXHalfIndexed(i, j, 0);
+        	}
         }
     }
 
-    int iterations = 3;
-    for (int iter = 0; iter < iterations; ++iter)
+    for (int iter = 0; iter < n_iterations; ++iter)
     {
         for (int j = 0; j < mac_grid.sizeY(); ++j)
         {
             for (int i = 0; i < mac_grid.sizeX(); ++i)
             {
-            	if (_valid_mask.value(i, j) == 0 && mac_grid.cellType(i, j) != SOLID)
+            	if (_valid_mask_x.value(i, j) == 0 && mac_grid.cellType(i, j) != SOLID && mac_grid.cellType(i - 1, j) != SOLID)
             	{
 	            	MyFloat new_vel_x = 0;
-	            	MyFloat new_vel_y = 0;
-	            	int n_valid_neighbors = 0;
+	            	int n_valid_neighbors_x = 0;
 
 	            	// Get values of all neighbors
-                    if(_valid_mask.value(i-1, j) == 1)
+                    if(_valid_mask_x.value(i-1, j) == 1)
                     {
-                        new_vel_x += mac_grid.velXBackBuffer(i-1, j);
-                        new_vel_y += mac_grid.velYBackBuffer(i-1, j);
-                        n_valid_neighbors++;
+                        new_vel_x += mac_grid.velXBackBufferHalfIndexed(i-1, j);
+                        n_valid_neighbors_x++;
                     }
-                    if(_valid_mask.value(i, j-1) == 1)
+                    if(_valid_mask_x.value(i, j-1) == 1)
                     {
-                        new_vel_x += mac_grid.velXBackBuffer(i, j-1);
-                        new_vel_y += mac_grid.velYBackBuffer(i, j-1);
-                        n_valid_neighbors++;
+                        new_vel_x += mac_grid.velXBackBufferHalfIndexed(i, j-1);
+                        n_valid_neighbors_x++;
                     }
-                    if(_valid_mask.value(i, j+1) == 1)
+                    if(_valid_mask_x.value(i, j+1) == 1)
                     {
-                        new_vel_x += mac_grid.velXBackBuffer(i, j+1);
-                        new_vel_y += mac_grid.velYBackBuffer(i, j+1);
-                        n_valid_neighbors++;
+                        new_vel_x += mac_grid.velXBackBufferHalfIndexed(i, j+1);
+                        n_valid_neighbors_x++;
                     }
-                    if(_valid_mask.value(i+1, j) == 1)
+                    if(_valid_mask_x.value(i+1, j) == 1)
                     {
-                        new_vel_x += mac_grid.velXBackBuffer(i+1, j);
-                        new_vel_y += mac_grid.velYBackBuffer(i+1, j);
-                        n_valid_neighbors++;
+                        new_vel_x += mac_grid.velXBackBufferHalfIndexed(i+1, j);
+                        n_valid_neighbors_x++;
                     }
 
 	            	// Average the value for the current cell
-	            	if (n_valid_neighbors > 0)
+	            	if (n_valid_neighbors_x > 0)
 	            	{
-	            		new_vel_x /= n_valid_neighbors;
-	            		new_vel_y /= n_valid_neighbors;
-
-	            		mac_grid.setVelXBackBuffer(i, j, new_vel_x);
-						mac_grid.setVelYBackBuffer(i, j, new_vel_y);
-	            		_valid_mask_back_buffer(i, j) = 1;
+	            		new_vel_x /= n_valid_neighbors_x;
+	            	
+	            		mac_grid.setVelXBackBufferHalfIndexed(i, j, new_vel_x);
+						_valid_mask_x_back_buffer(i, j) = 1;
 	            	}
             	}
-                /*
-                if (_valid_mask.value(i, j) == 0 && mac_grid.cellType(i, j) != SOLID)
-                {
-                    MyFloat new_vel_x = 0;
-                    MyFloat new_vel_y = 0;
-                    int n_valid_neighbors = 0;
-                    
-                    // Get values of all neighbors
-                    if(_valid_mask.value(i-1, j) == 1)
-                    {
-                        new_vel_x += mac_grid.velXBackBufferHalfIndexed(i-1, j);
-                        new_vel_y += mac_grid.velYBackBufferHalfIndexed(i-1, j);
-                        n_valid_neighbors++;
-                    }
-                    if(_valid_mask.value(i+1, j) == 1)
-                    {
-                        new_vel_x += mac_grid.velXBackBufferHalfIndexed(i+1, j);
-                        new_vel_y += mac_grid.velYBackBufferHalfIndexed(i+1, j);
-                        n_valid_neighbors++;
-                    }
-                    if(_valid_mask.value(i, j-1) == 1)
-                    {
-                        new_vel_x += mac_grid.velXBackBufferHalfIndexed(i, j-1);
-                        new_vel_y += mac_grid.velYBackBufferHalfIndexed(i, j-1);
-                        n_valid_neighbors++;
-                    }
-                    if(_valid_mask.value(i, j+1) == 1)
-                    {
-                        new_vel_x += mac_grid.velXBackBufferHalfIndexed(i, j+1);
-                        new_vel_y += mac_grid.velYBackBufferHalfIndexed(i, j+1);
-                        n_valid_neighbors++;
-                    }
-                    
-                    // Average the value for the current cell
-                    if (n_valid_neighbors > 0)
-                    {
-                        new_vel_x /= n_valid_neighbors;
-                        new_vel_y /= n_valid_neighbors;
-                        
-                        mac_grid.setVelXBackBufferHalfIndexed(i, j, new_vel_x);
-                        mac_grid.setVelYBackBufferHalfIndexed(i, j, new_vel_y);
-                        _valid_mask_back_buffer(i, j) = 1;
-                    }
-                }*/
 
+            	if (_valid_mask_y.value(i, j) == 0 && mac_grid.cellType(i, j) != SOLID && mac_grid.cellType(i, j - 1) != SOLID)
+            	{
+	            	MyFloat new_vel_y = 0;
+	            	int n_valid_neighbors_y = 0;
+
+	            	// Get values of all neighbors
+                    if(_valid_mask_y.value(i-1, j) == 1)
+                    {
+                        new_vel_y += mac_grid.velYBackBufferHalfIndexed(i-1, j);
+                        n_valid_neighbors_y++;
+                    }
+                    if(_valid_mask_y.value(i, j-1) == 1)
+                    {
+                        new_vel_y += mac_grid.velYBackBufferHalfIndexed(i, j-1);
+                        n_valid_neighbors_y++;
+                    }
+                    if(_valid_mask_y.value(i, j+1) == 1)
+                    {
+                        new_vel_y += mac_grid.velYBackBufferHalfIndexed(i, j+1);
+                        n_valid_neighbors_y++;
+                    }
+                    if(_valid_mask_y.value(i+1, j) == 1)
+                    {
+                        new_vel_y += mac_grid.velYBackBufferHalfIndexed(i+1, j);
+                        n_valid_neighbors_y++;
+                    }
+
+	            	// Average the value for the current cell
+	            	if (n_valid_neighbors_y > 0)
+	            	{
+	            		new_vel_y /= n_valid_neighbors_y;
+	            	
+	            		mac_grid.setVelYBackBufferHalfIndexed(i, j, new_vel_y);
+						_valid_mask_y_back_buffer(i, j) = 1;
+	            	}
+            	}
             }
         }
         // Swap valid mask
-        Grid<char>* tmp = &_valid_mask;
-        _valid_mask = std::move(_valid_mask_back_buffer);
-        _valid_mask_back_buffer = std::move(*tmp);
+        Grid<char>* tmp = &_valid_mask_x;
+        _valid_mask_x = std::move(_valid_mask_x_back_buffer);
+        _valid_mask_x_back_buffer = std::move(*tmp);
+
+        Grid<char>* tmp2 = &_valid_mask_y;
+        _valid_mask_y = std::move(_valid_mask_y_back_buffer);
+        _valid_mask_y_back_buffer = std::move(*tmp2);
     }
     mac_grid.swapBuffers();
 }
@@ -488,4 +608,149 @@ void FluidSolver::getAdvectedPositionForwardEuler(
 
 	*x = x_pos_prev;
 	*y = y_pos_prev;
+}
+
+void FluidSolver::transferVelocityToGridGather(
+	MarkerParticleSet& particle_set,
+	MacGrid& mac_grid)
+{
+	for (int j = 0; j < mac_grid.sizeY(); ++j)
+	{
+		for (int i = 0; i < mac_grid.sizeX(); ++i)
+		{
+			MyFloat x_x_vel_grid = i * mac_grid.deltaX();
+			MyFloat y_x_vel_grid = (j + 0.5) * mac_grid.deltaY();
+			MyFloat x_y_vel_grid = (i + 0.5) * mac_grid.deltaX();
+			MyFloat y_y_vel_grid = j * mac_grid.deltaY();
+			
+			MyFloat weight_vel_x_sum = 0;
+			MyFloat vel_x_sum = 0;
+			MyFloat weight_vel_y_sum = 0;
+			MyFloat vel_y_sum = 0;
+			for (auto p = particle_set.begin(); p != particle_set.end(); p++)
+			{
+				// x velocity
+				MyFloat abs_x_diff = std::abs(p->posX() - x_x_vel_grid);
+				MyFloat abs_y_diff = std::abs(p->posY() - y_x_vel_grid);
+				MyFloat weight_vel_x =
+					1 - (abs_x_diff / mac_grid.deltaX() +
+					abs_y_diff / mac_grid.deltaY());
+				if (weight_vel_x >= 1)
+				{
+					weight_vel_x_sum += weight_vel_x;
+					vel_x_sum += p->velX();
+				}
+				// y velocity
+				abs_x_diff = std::abs(p->posX() - x_y_vel_grid);
+				abs_y_diff = std::abs(p->posY() - y_y_vel_grid);
+				MyFloat weight_vel_y =
+					1 - (abs_x_diff / mac_grid.deltaX() +
+					abs_y_diff / mac_grid.deltaY());
+				if (weight_vel_y >= 1)
+				{
+					weight_vel_y_sum += weight_vel_y;
+					vel_y_sum += p->velY();
+				}
+			}
+			if (weight_vel_x_sum)
+			{
+				vel_x_sum /= weight_vel_x_sum;
+				mac_grid.setVelXBackBufferHalfIndexed(i, j, vel_x_sum);
+			}
+			if (weight_vel_y_sum)
+			{
+				vel_y_sum /= weight_vel_y_sum;
+				mac_grid.setVelYBackBufferHalfIndexed(i, j, vel_y_sum);
+			}
+		}
+	}
+	mac_grid.swapBuffers();
+}
+
+
+void FluidSolver::transferVelocityToGridSpread(
+	MarkerParticleSet& particle_set,
+	MacGrid& mac_grid)
+{
+	for (int j = 0; j < mac_grid.sizeY(); ++j)
+	{
+		for (int i = 0; i < mac_grid.sizeX(); ++i)
+		{
+			_vel_x_sum(i, j) = 0;
+			_vel_y_sum(i, j) = 0;
+			_weight_vel_x_sum(i, j) = 0;
+			_weight_vel_y_sum(i, j) = 0;
+		}
+	}
+	for (auto p = particle_set.begin(); p != particle_set.end(); p++)
+	{
+		_vel_x_sum.addToValueInterpolated(
+			p->posX(), p->posY() - 0.5 * mac_grid.deltaY(), p->velX());
+		_vel_y_sum.addToValueInterpolated(
+			p->posX() - 0.5 * mac_grid.deltaX(), p->posY(), p->velY());
+		_weight_vel_x_sum.addToValueInterpolated(
+			p->posX(), p->posY() - 0.5 * mac_grid.deltaY(), 1.0);
+		_weight_vel_y_sum.addToValueInterpolated(
+			p->posX() - 0.5 * mac_grid.deltaX(), p->posY(), 1.0);
+	}
+	for (int j = 0; j < mac_grid.sizeY(); ++j)
+	{
+		for (int i = 0; i < mac_grid.sizeX(); ++i)
+		{
+			if (_weight_vel_x_sum(i, j) > 0.000001)
+			{
+				MyFloat new_vel_x = _vel_x_sum(i, j) / _weight_vel_x_sum(i, j);
+				mac_grid.setVelXBackBufferHalfIndexed(i, j, new_vel_x);
+			}
+			if (_weight_vel_y_sum(i, j) > 0.000001)
+			{
+				MyFloat new_vel_y = _vel_y_sum(i, j) / _weight_vel_y_sum(i, j);
+				mac_grid.setVelYBackBufferHalfIndexed(i, j, new_vel_y);
+			}
+		}
+	}
+	mac_grid.swapBuffers();
+}
+
+void FluidSolver::transferVelocityToParticlesPIC(
+	MacGrid& mac_grid,
+	MarkerParticleSet& particle_set)
+{
+	for (auto p = particle_set.begin(); p != particle_set.end(); p++)
+	{
+		p->setVelocity(
+			mac_grid.velXInterpolated(p->posX(), p->posY()),
+			mac_grid.velYInterpolated(p->posX(), p->posY()));
+	}
+}
+
+
+void FluidSolver::transferVelocityToParticlesFLIP(
+	MacGrid& mac_grid,
+	MarkerParticleSet& particle_set)
+{
+	for (auto p = particle_set.begin(); p != particle_set.end(); p++)
+	{
+        p->setVelocity(
+			p->velX() + mac_grid.velXDiffInterpolated(p->posX(), p->posY()),
+			p->velY() + mac_grid.velYDiffInterpolated(p->posX(), p->posY()));
+	}
+}
+
+void FluidSolver::transferVelocityToParticlesPICFLIP(
+	MacGrid& mac_grid,
+	MarkerParticleSet& particle_set,
+	MyFloat pic_ratio)
+{
+	for (auto p = particle_set.begin(); p != particle_set.end(); p++)
+	{
+        MyFloat pic_vel_x = mac_grid.velXInterpolated(p->posX(), p->posY());
+        MyFloat pic_vel_y = mac_grid.velYInterpolated(p->posX(), p->posY());
+        MyFloat flip_vel_x = p->velX() + mac_grid.velXDiffInterpolated(p->posX(), p->posY());
+        MyFloat flip_vel_y = p->velY() + mac_grid.velYDiffInterpolated(p->posX(), p->posY());
+
+        p->setVelocity(
+        	pic_vel_x * pic_ratio + flip_vel_x * (1 - pic_ratio),
+        	pic_vel_y * pic_ratio + flip_vel_y * (1 - pic_ratio));
+	}
 }

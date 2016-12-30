@@ -23,7 +23,7 @@ public:
 	inline T value(int i, int j) const;
 	inline int sizeX() const;
 	inline int sizeY() const;
-    inline bool indexIsValid(int i, int j);
+    inline bool indexIsValid(int i, int j) const;
 
 	// Set
 	inline T& operator()(int i, int j);
@@ -95,7 +95,7 @@ inline void Grid<T>::linearTo2D(int idx, int* i, int* j) const
 template <class T>
 inline int Grid<T>::twoDToLinear(int i, int j) const
 {
-    assert(indexIsValid(i, j));
+    assert(this->indexIsValid(i, j));
 	return i + j * _SIZE_X;
 }
 
@@ -118,7 +118,7 @@ inline int Grid<T>::sizeY() const
 }
 
 template <class T>
-inline bool Grid<T>::indexIsValid(int i, int j)
+inline bool Grid<T>::indexIsValid(int i, int j) const
 {
     return i >= 0 && i < _SIZE_X && j >= 0 && j < _SIZE_Y;
 }
@@ -151,14 +151,17 @@ inline T SizedGrid<T>::valueInterpolated(MyFloat x, MyFloat y) const
 	int j = y / _DELTA_Y;
 	MyFloat i_frac = x / _DELTA_X - i;
 	MyFloat j_frac = y / _DELTA_Y - j;
-
-    assert(indexIsValid(i, j));
+    
+    i = CLAMP(i, 0, this->_SIZE_X - 1);
+    j = CLAMP(j, 0, this->_SIZE_X - 1);
+    int i_plus1 = CLAMP(i + 1, 0, this->_SIZE_X - 1);
+    int j_plus1 = CLAMP(j + 1, 0, this->_SIZE_Y - 1);
     
 	// First interpolate in x, then in y
 	MyFloat value_00 = this->value(i,j);
-	MyFloat value_10 = this->value(i + 1,j);
-	MyFloat value_01 = this->value(i,j + 1);
-	MyFloat value_11 = this->value(i + 1,j + 1);
+	MyFloat value_10 = this->value(i_plus1,j);
+	MyFloat value_01 = this->value(i,j_plus1);
+	MyFloat value_11 = this->value(i_plus1,j_plus1);
 
 	// Interpolate x
 	MyFloat value_0 = (1 - i_frac) * value_00 + i_frac * value_10;
@@ -182,16 +185,16 @@ inline MyFloat SizedGrid<T>::deltaY() const
 }
 
 template <class T>
-void SizedGrid<T>::worldToCell(MyFloat x, MyFloat y, int* i, int* j) const
+inline void SizedGrid<T>::worldToCell(MyFloat x, MyFloat y, int* i, int* j) const
 {
 	*i = x / _DELTA_X;
 	*j = y / _DELTA_Y;
 }
 
 template <class T>
-void SizedGrid<T>::cellToWorld(int i, int j, MyFloat* x, MyFloat* y) const
+inline void SizedGrid<T>::cellToWorld(int i, int j, MyFloat* x, MyFloat* y) const
 {
-    assert(indexIsValid(i, j));
+    assert(this->indexIsValid(i, j));
     
 	*x = i * _DELTA_X;
 	*y = j * _DELTA_Y;

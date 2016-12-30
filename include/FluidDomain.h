@@ -16,7 +16,7 @@ public:
 		MyFloat y_min,
 		MyFloat y_max,
 		MyFloat time_step,
-		int max_creations);
+		int max_spawns);
 	~FluidSource();
 	void update(MarkerParticleSet& particle_set, MyFloat dt);
 	bool isFinished();
@@ -27,8 +27,8 @@ private:
 	MyFloat _y_max;
 	MyFloat _time_step;
 	MyFloat _time_since_last;
-	int _max_creations;
-	int _n_creations;
+	int _max_spawns;
+	int _n_spawns;
 };
 
 class FluidDomain
@@ -51,12 +51,13 @@ public:
 	MarkerParticleSet& markerParticleSet();
 	const MyFloat density();
 
-private:
+	void advectParticlesWithGrid(MyFloat dt);
 	void advectParticles(MyFloat dt);
 	void advectLevelSet(MyFloat dt);
 
 	void classifyCells(LevelSet& levelSet);
 	void classifyCells(MarkerParticleSet& particle_set);
+private:
 	
 	MyFloat _density;
 	MacGrid _mac_grid;
