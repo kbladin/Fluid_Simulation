@@ -2,16 +2,21 @@
 
 ## Implemented
 * Staggered MAC Grid
-* Bilinear interpolation for velocity advection
-* Runge Kutta solver
-* Pressure solve (using the conjugate gradient method with the linear algebra library "Eigen")
+* Different advection schemes
+	* Semi Lagrangian advection with
+		* Bilinear interpolation
+		* Runge Kutta and Euler solver
+	* PIC advection with bilinear interpolation
+	* FLIP advection with bilinear interpolation
+	* PIC / FLIP combination
+* Pressure solve using the conjugate gradient method with the linear algebra library "Eigen"
 * Enforce Dirichlet boundary condition
 * Marker particles for air/fluid separation
-* Velocity extension
+* Velocity extension using brute force search through grid
 
-Example:
+Examples:
 
-![](images/water.gif "Water Simulation With Marker Particles") ![](images/grid.gif "Water Simulation With Marker Particles")
+![](images/PIC.gif "PIC simulation") ![](images/FLIP.gif "FLIP simulation") ![](images/PICFLIP98.gif "2% PIC 98%FLIP simulation")
 
 
 ## Not Yet Implemented
@@ -20,6 +25,6 @@ Example:
 * A reasonable volume preservation method
 * Make sure marker particles are outside of obstacles
 * Other interpolation alternatives (quadratic, cubic, Catmull Rom)
-* Level set method for air/fluid separation
+* Other air/fluid separation techniques (for example level set)
 * 3D simulation
 * Sophisticated rendering
