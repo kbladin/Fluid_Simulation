@@ -18,7 +18,6 @@ Examples:
 
 ![](images/PIC.gif "PIC simulation") ![](images/FLIP.gif "FLIP simulation") ![](images/PICFLIP98.gif "2% PIC 98%FLIP simulation")
 
-
 ## Not Yet Implemented
 * Adaptive time steps
 * Vorticity confinement
