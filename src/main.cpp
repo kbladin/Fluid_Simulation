@@ -46,7 +46,7 @@ int main(int argc, char const *argv[])
 			fluid_domain.update(dt);
 
 			// Solve
-			fluid_solver.stepPICFLIP(fluid_domain, dt, 0.0);
+			fluid_solver.stepPICFLIP(fluid_domain, dt, 0.02);
 		}
 		// Render
 		renderer.clearCanvas(canvas);
