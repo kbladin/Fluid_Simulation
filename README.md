@@ -1,4 +1,4 @@
-# Eulerian_Fluid_Simulation
+# Fluid_Simulation
 
 ## Implemented
 * Staggered MAC Grid
