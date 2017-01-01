@@ -5,24 +5,21 @@ MacGrid::MacGrid(
 	int size_y,
 	MyFloat length_x,
 	MyFloat length_y) :
-
-	_SIZE_X(size_x),
-	_SIZE_Y(size_y),
-	_LENGTH_X(length_x),
-	_LENGTH_Y(length_y),
-	_DELTA_X(length_x / size_x),
-	_DELTA_Y(length_y / size_y),
-
-    _vel_x_previous(size_x, size_y, _DELTA_Y, _DELTA_Y),
-    _vel_y_previous(size_x, size_y, _DELTA_Y, _DELTA_Y),
-    _vel_x_diff(size_x, size_y, _DELTA_Y, _DELTA_Y),
-    _vel_y_diff(size_x, size_y, _DELTA_Y, _DELTA_Y),
+    GridInterface(size_x, size_y, length_x / size_x, length_y / size_y),
+    _vel_x_previous(size_x, size_y, _DELTA_X, _DELTA_Y),
+    _vel_y_previous(size_x, size_y, _DELTA_X, _DELTA_Y),
+    _vel_x_diff(size_x, size_y, _DELTA_X, _DELTA_Y),
+    _vel_y_diff(size_x, size_y, _DELTA_X, _DELTA_Y),
     _cell_type_buffer(size_x, size_y)
 {
-    _vel_x_front_buffer = std::make_unique< SizedGrid<MyFloat> >(size_x, size_y, _DELTA_X, _DELTA_Y);
-    _vel_y_front_buffer = std::make_unique< SizedGrid<MyFloat> >(size_x, size_y, _DELTA_X, _DELTA_Y);
-    _vel_x_back_buffer = std::make_unique< SizedGrid<MyFloat> >(size_x, size_y, _DELTA_X, _DELTA_Y);
-    _vel_y_back_buffer = std::make_unique< SizedGrid<MyFloat> >(size_x, size_y, _DELTA_X, _DELTA_Y);
+    _vel_x_front_buffer = std::make_unique< Grid<MyFloat> >
+    	(size_x, size_y, _DELTA_X, _DELTA_Y);
+    _vel_y_front_buffer = std::make_unique< Grid<MyFloat> >
+    	(size_x, size_y, _DELTA_X, _DELTA_Y);
+    _vel_x_back_buffer = std::make_unique< Grid<MyFloat> >
+    	(size_x, size_y, _DELTA_X, _DELTA_Y);
+    _vel_y_back_buffer = std::make_unique< Grid<MyFloat> >
+    	(size_x, size_y, _DELTA_X, _DELTA_Y);
     
 	clearCellTypeBuffer();
 }
@@ -64,14 +61,16 @@ void MacGrid::updateVelocityDiffBuffer()
 	{
 		for (int i = 0; i < _SIZE_X; ++i)
 		{
-			_vel_x_diff(i, j) = _vel_x_front_buffer->value(i, j) - _vel_x_previous.value(i, j);
-			_vel_y_diff(i, j) = _vel_y_front_buffer->value(i, j) - _vel_y_previous.value(i, j);
+			_vel_x_diff(i, j) =
+				_vel_x_front_buffer->value(i, j) - _vel_x_previous.value(i, j);
+			_vel_y_diff(i, j) =
+				_vel_y_front_buffer->value(i, j) - _vel_y_previous.value(i, j);
 		}
 	}
 }
 
 // Getters
-
+/*
 glm::dmat2 MacGrid::computeVelocityGradientMatrix(int i, int j)
 {
 	glm::dmat2 vel_grad;
@@ -85,6 +84,7 @@ glm::dmat2 MacGrid::computeVelocityGradientMatrix(int i, int j)
 	vel_grad[1][1] = divVelY(i, j);
 	return vel_grad;
 }
+*/
 
 void MacGrid::swapBuffers()
 {

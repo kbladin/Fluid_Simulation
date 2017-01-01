@@ -1,23 +1,24 @@
 #include <FluidDomain.h>
 
-#include <iostream>
-#include <random>
-
 FluidSource::FluidSource(
 	MyFloat x_min,
 	MyFloat x_max,
 	MyFloat y_min,
 	MyFloat y_max,
+	MyFloat x_velocity,
+	MyFloat y_velocity,
 	MyFloat time_step,
-	int max_spawns)
-	: _x_min(x_min)
-	, _x_max(x_max)
-	, _y_min(y_min)
-	, _y_max(y_max)
-	, _time_step(time_step)
-	, _time_since_last(0.0)
-	, _max_spawns(max_spawns)
-	, _n_spawns(0)
+	int max_spawns) :
+	_x_min(x_min),
+	_x_max(x_max),
+	_y_min(y_min),
+	_y_max(y_max),
+	_x_velocity(x_velocity),
+	_y_velocity(y_velocity),
+	_time_step(time_step),
+	_time_since_last(0.0),
+	_max_spawns(max_spawns),
+	_n_spawns(0)
 {
 
 }
@@ -34,13 +35,14 @@ void FluidSource::update(MarkerParticleSet& particle_set, MyFloat dt)
 
 	if (_time_since_last >= _time_step)
 	{
-		MyFloat x_incr = 1.0 / 40.0 / 3.0;
-		MyFloat y_incr = 1.0 / 40.0 / 3.0;
+		MyFloat x_incr = 1.0 / 80.0 / 3.0;
+		MyFloat y_incr = 1.0 / 80.0 / 3.0;
 		for (MyFloat y = _y_min; y < _y_max; y += y_incr)
 		{
 			for (MyFloat x = _x_min; x < _x_max; x += x_incr)
 			{
-				particle_set.addParticle(x, y);
+				particle_set.addParticle(
+					MarkerParticle(x, y, _x_velocity, _y_velocity));
 			}
 		}
 
@@ -55,8 +57,6 @@ bool FluidSource::isFinished()
 	return _max_spawns != -1 && _n_spawns >= _max_spawns;
 }
 
-static const int N_PARTICLES = 0;
-
 FluidDomain::FluidDomain(
 	int size_x,
 	int size_y,
@@ -66,15 +66,8 @@ FluidDomain::FluidDomain(
 	: _density(density)
     , _mac_grid(size_x, size_y, length_x, length_y)
     , _level_set(size_x, size_y, length_x, length_y)
-    , _particle_set(N_PARTICLES)
 {
-	// Set positions for all N_PARTICLES particles
-	for (auto it = _particle_set.begin(); it != _particle_set.end(); it++)
-	{
-		it->setPosition(
-			(rand() / MyFloat(INT_MAX) / 2 ) * (length_x - length_x / size_x * 2) + length_x / size_x,
-			(rand() / MyFloat(INT_MAX) / 2 ) * (length_y - length_y / size_y * 2) + length_y / 2);
-	}
+
 }
 
 FluidDomain::~FluidDomain()
@@ -172,9 +165,12 @@ void FluidDomain::classifyCells(MarkerParticleSet& particle_set)
 		int x = (it->posX() / _mac_grid.lengthX()) * _mac_grid.sizeX();
 		int y = (it->posY() / _mac_grid.lengthY()) * _mac_grid.sizeY();
         
+        x = CLAMP(x, 0, _mac_grid.sizeX()-1);
+        y = CLAMP(y, 0, _mac_grid.sizeY()-1);
+        
 		_mac_grid.setCellType(x, y, LIQUID);
 	}
-	// Reset border (ugly)
+	// Reset border
     for (int j = 0; j < _mac_grid.sizeY(); ++j)
     {
         for (int i = 0; i < _mac_grid.sizeX(); ++i)

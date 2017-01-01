@@ -2,6 +2,7 @@
 #define MATH_DEFINITIONS
 
 #include <Eigen/SparseCore>
+#include <math.h>
 
 #define CLAMP(x, low, high) (x < low ? low : (x > high ? high : x))
 
@@ -13,5 +14,20 @@ typedef Eigen::VectorXd VectorX;
 typedef float MyFloat;
 typedef Eigen::VectorXf VectorX;
 #endif
+
+inline MyFloat smoothstep(MyFloat edge0, MyFloat edge1, MyFloat x)
+{
+    // Scale, bias and saturate x to 0..1 range
+    x = CLAMP((x - edge0)/(edge1 - edge0), 0.0, 1.0); 
+    // Evaluate polynomial
+    return x*x*(3 - 2*x);
+}
+
+inline MyFloat gaussian(MyFloat x, MyFloat sigma, MyFloat mu)
+{
+	MyFloat a = 1 / (sigma * sqrt(2 * M_PI));
+	MyFloat x_minus_b = x - mu;
+	return a * exp(-(x_minus_b * x_minus_b) / (2 * sigma*sigma));
+}
 
 #endif

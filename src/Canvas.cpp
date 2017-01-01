@@ -102,6 +102,15 @@ void Canvas::setPixel(int i, int j, Color c)
 	}
 }
 
+void Canvas::addToPixel(int i, int j, Color c)
+{
+	if (i >= 0 && i < _WIDTH &&
+		j >= 0 && j < _HEIGHT)
+	{
+		_pixel_data(i, j) += c;
+	}
+}
+
 void Canvas::fill(Color c)
 {
 	for (int j = 0; j < _HEIGHT; ++j)

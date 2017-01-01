@@ -10,15 +10,20 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/modules)
 
 # Find external packages
 
-find_package(GLM REQUIRED)
+#find_package(CUDA)
+#list(APPEND CUDA_NVCC_FLAGS "-arch=sm_20;-std=c++11;-O2;-DVERBOSE")
+#SET(CUDA_PROPAGATE_HOST_FLAGS OFF)
+#CUDA_ADD_EXECUTABLE(cpp11 main.cu)
 
-set(EIGEN3_INCLUDE_DIR "default value" CACHE PATH "description")
+#find_package(GLM REQUIRED)
+
+set(EIGEN3_INCLUDE_DIR "/usr/local/include/eigen3" CACHE PATH "description")
 
 include_directories ( "${EIGEN3_INCLUDE_DIR}" )
 
 # Add include directories
 include_directories(${EIGEN3_INCLUDE_DIR})
-include_directories(${GLM_INCLUDE_DIR})
+#include_directories(${GLM_INCLUDE_DIR})
 
 # Our own include directory
 set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR}/include)
@@ -45,10 +50,10 @@ add_executable(${PROJECT_NAME} src/main.cpp)
 target_link_libraries(${PROJECT_NAME}
 	${PROJECT_NAME}_lib
 	)
-# C++11 compatability
+
+# C++14 compatability
 set_target_properties(${PROJECT_NAME}_lib PROPERTIES COMPILE_FLAGS "-std=c++14")
 set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS "-std=c++14")
-
 
 #LDFLAGS:  -L/usr/local/opt/superlu43/lib
 #CPPFLAGS: -I/usr/local/opt/superlu43/include

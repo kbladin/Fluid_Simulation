@@ -37,9 +37,9 @@ MarkerParticleSet::~MarkerParticleSet()
 
 }
 
-void MarkerParticleSet::addParticle(MyFloat pos_x, MyFloat pos_y)
+void MarkerParticleSet::addParticle(MarkerParticle p)
 {
-	_particles.push_back(MarkerParticle(pos_x, pos_y));
+	_particles.push_back(p);
 }
 
 void MarkerParticleSet::reserve(int particle_count)

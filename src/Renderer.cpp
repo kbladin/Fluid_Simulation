@@ -58,7 +58,9 @@ void Renderer::renderGridCellsToCanvas(const MacGrid& grid, Canvas& canvas)
 	}
 }
 
-void Renderer::renderLevelSetFunctionValuesToCanvas(const LevelSet& level_set, Canvas& canvas)
+void Renderer::renderLevelSetFunctionValuesToCanvas(
+	const LevelSet& level_set,
+	Canvas& canvas)
 {
 	int grid_size_x = level_set.sizeX();
 	int grid_size_y = level_set.sizeY();
@@ -128,7 +130,8 @@ void Renderer::renderGridVelocitiesToCanvas(const MacGrid& grid, Canvas& canvas)
 			float length_scaled = length_in_pixels / (canvas.width() / 40);
 
 			MyFloat blue = CLAMP(1 - length_scaled, 0 , 1);
-			MyFloat green = (CLAMP(length_scaled, 0 , 1) - CLAMP(length_scaled - 1, 0 , 1));
+			MyFloat green =
+				(CLAMP(length_scaled, 0 , 1) - CLAMP(length_scaled - 1, 0 , 1));
 			MyFloat red = CLAMP(length_scaled - 1, 0 , 1);
 	
 			canvas.setLineColor(Color(red, green, blue));
@@ -138,7 +141,9 @@ void Renderer::renderGridVelocitiesToCanvas(const MacGrid& grid, Canvas& canvas)
 	}
 }
 
-void Renderer::renderParticlesToCanvas(const MarkerParticleSet& particle_set, Canvas& canvas)
+void Renderer::renderParticlesToCanvas(
+	const MarkerParticleSet& particle_set,
+	Canvas& canvas)
 {
 	MyFloat scale_x = canvas.width() / (_x_max - _x_min);
 	MyFloat scale_y = canvas.height() / (_y_max - _y_min);
@@ -146,8 +151,8 @@ void Renderer::renderParticlesToCanvas(const MarkerParticleSet& particle_set, Ca
 	MyFloat translate_x = 0.5 * (_x_min * canvas.width());
 	MyFloat translate_y = 0.5 * (_y_min * canvas.height());
 
-	canvas.setLineColor(Color(0,0.5,0.8));
-	canvas.setFillColor(Color(0,0.5,0.8));
+	canvas.setLineColor(Color(0.3,0.6,0.9));
+	canvas.setFillColor(Color(0.3,0.6,0.9));
 
 	for (auto it = particle_set.begin(); it != particle_set.end(); it++)
 	{
@@ -157,6 +162,59 @@ void Renderer::renderParticlesToCanvas(const MarkerParticleSet& particle_set, Ca
 		
 		canvas.drawPoint(pos_x, pos_y, 3);
 	}
+}
+
+void Renderer::renderMetaBallsToCanvas(
+	const MarkerParticleSet& particle_set,
+	Canvas& canvas)
+{
+    int w = canvas.width();
+    int h = canvas.height();
+    Grid<MyFloat> distance_field(w, h);
+	MyFloat scale_x = w / (_x_max - _x_min);
+	MyFloat scale_y = h / (_y_max - _y_min);
+
+	MyFloat translate_x = 0.5 * (_x_min * w);
+	MyFloat translate_y = 0.5 * (_y_min * h);
+
+	canvas.setLineColor(Color(0.5,0.9,1.0));
+	canvas.setFillColor(Color(0,0.5,0.7));
+
+	for (auto it = particle_set.begin(); it != particle_set.end(); it++)
+	{
+		// Position in pixel coordinates
+		int pos_x = - translate_x + scale_x * it->posX();
+		int pos_y = - translate_y + scale_y * it->posY();
+
+		// Area of influence
+		int radius = 5;
+		for (int j = -radius; j < radius; ++j)
+		{
+			for (int i = -radius; i < radius; ++i)
+			{
+				MyFloat t = CLAMP(sqrt((i*i + j*j)) / radius, 0, 1);
+				t = gaussian(t, 0.4, 0);
+                int idx_i = pos_x + i;
+                int idx_j = pos_y + j;
+                if (idx_i >= 0 && idx_i < w && idx_j >= 0 && idx_j < h)
+                {
+                    distance_field(pos_x + i, pos_y + j) += t;
+                }
+            }
+		}
+	}
+    for (int j = 0; j < h; j++) {
+        for (int i = 0; i < w; i++) {
+            if (distance_field(i,j) > 0.6)
+            {
+                canvas.setPixel(i, j, canvas.fillColor());
+            } else
+            if (distance_field(i,j) > 0.2)
+            {
+                canvas.setPixel(i, j, canvas.lineColor());
+            }
+        }
+    }
 }
 
 void Renderer::writeCanvasToPpm(const char* file_path, Canvas& canvas)

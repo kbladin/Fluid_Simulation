@@ -52,10 +52,10 @@ private:
 class MarkerParticleSet
 {
 public:
-	MarkerParticleSet(int size);
+	MarkerParticleSet(int size = 0);
 	~MarkerParticleSet();
 
-	void addParticle(MyFloat pos_x, MyFloat pos_y);
+	void addParticle(MarkerParticle p);
 	void reserve(int particle_count);
 	void advect(MyFloat dt);
 

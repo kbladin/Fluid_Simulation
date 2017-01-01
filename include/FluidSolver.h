@@ -5,15 +5,42 @@
 
 #include <Eigen/SparseCore>
 #include <Eigen/IterativeLinearSolvers>
-#include <glm/glm.hpp>
 
 #include "MathDefinitions.h"
+
+class FluidSolverMemoryPool : public GridInterface
+{
+public:
+	FluidSolverMemoryPool(int size_x, int size_y, MyFloat delta_x, MyFloat delta_y);
+	FluidSolverMemoryPool(const FluidSolverMemoryPool& other);
+	~FluidSolverMemoryPool();
+
+	void swapValidMaskBuffer();
+
+	// Used for pressure solve
+    Grid<int> fluid_indices;
+    Grid<unsigned char> n_particles;
+
+    // Used for velocity extension
+    std::unique_ptr< Grid<unsigned char> > valid_mask_x_front_buffer;
+    std::unique_ptr< Grid<unsigned char> > valid_mask_x_back_buffer;
+    std::unique_ptr< Grid<unsigned char> > valid_mask_y_front_buffer;
+    std::unique_ptr< Grid<unsigned char> > valid_mask_y_back_buffer;
+    
+    // Used for PIC solve
+    Grid<MyFloat> vel_x_sum;
+    Grid<MyFloat> vel_y_sum;
+    Grid<MyFloat> weight_vel_x_sum;
+    Grid<MyFloat> weight_vel_y_sum;
+};
 
 class FluidSolver
 {
 public:
-	FluidSolver(int size_x, int size_y, MyFloat delta_x, MyFloat delta_y);
+	FluidSolver();
 	~FluidSolver();
+
+	void initialize(FluidSolverMemoryPool mem_pool);
 
 	void stepSemiLagrangian(FluidDomain& fluid_domain, MyFloat dt);
 	void stepPIC(FluidDomain& fluid_domain, MyFloat dt);
@@ -34,8 +61,10 @@ private:
 	void pressureSolve(
 		MacGrid& mac_grid,
 		MarkerParticleSet& particle_set,
-		MyFloat density);
-	void extendVelocity(MacGrid& mac_grid, int n_iterations);
+		MyFloat density,
+		MyFloat dt);
+	void extendVelocityIndividual(MacGrid& mac_grid, int n_iterations);
+	void extendVelocityAvarageing(MacGrid& mac_grid, int n_iterations);
 
 	void advectVelocitySemiLagrangian(MacGrid& mac_grid, MyFloat dt);
 	void advectParticles(
@@ -78,24 +107,9 @@ private:
 
 	// Solver of linear system
 	Eigen::ConjugateGradient<Eigen::SparseMatrix<MyFloat> > _cg_solver;
-
-	// Cached
-	Grid<int> _fluid_indices;
-	//Grid<int> _n_particles;
-	Grid<char> _valid_mask_x;
-	Grid<char> _valid_mask_x_back_buffer;
-    Grid<char> _valid_mask_y;
-	Grid<char> _valid_mask_y_back_buffer;
-    Eigen::SparseMatrix<MyFloat> A;
-
-    // Used for PIC solve
-    SizedGrid<MyFloat> _vel_x_sum;
-	SizedGrid<MyFloat> _vel_y_sum;
-	SizedGrid<MyFloat> _weight_vel_x_sum;
-	SizedGrid<MyFloat> _weight_vel_y_sum;
-
-	const int _SIZE_X, _SIZE_Y;
-	const MyFloat _DELTA_X, _DELTA_Y;
+    // Laplacian matrix
+    Eigen::SparseMatrix<MyFloat> _A;
+    std::unique_ptr<FluidSolverMemoryPool> _mem_pool;
 };
 
 #endif

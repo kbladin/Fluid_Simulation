@@ -21,6 +21,7 @@ public:
 	void renderGridCellsToCanvas(const MacGrid& grid, Canvas& canvas);
 	void renderLevelSetFunctionValuesToCanvas(const LevelSet& level_set, Canvas& canvas);
 	void renderParticlesToCanvas(const MarkerParticleSet& particle_set, Canvas& canvas);
+	void renderMetaBallsToCanvas(const MarkerParticleSet& particle_set, Canvas& canvas);
 
 	void writeCanvasToPpm( const char* file_path, Canvas& canvas);
 private:

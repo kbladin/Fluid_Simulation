@@ -8,74 +8,97 @@
 
 #include "MathDefinitions.h"
 
-template <class T>
-class Grid
+class GridInterface
 {
 public:
-	Grid(int size_x, int size_y);
-	~Grid();
-	
+	GridInterface(int size_x, int size_y, MyFloat delta_x = 1, MyFloat delta_y = 1) :
+		_SIZE_X(size_x),
+		_SIZE_Y(size_y),
+		_DELTA_X(delta_x),
+		_DELTA_Y(delta_y) { };
+	~GridInterface() {};
+
 	// Transform
-	inline void linearTo2D(int idx, int* i, int* j) const;
-	inline int twoDToLinear(int i, int j) const;
+	inline void linearTo2D(int idx, int* i, int* j) const
+	{
+		*i = idx % (_SIZE_X);
+		*j = idx / (_SIZE_X);
+	};
+	inline int twoDToLinear(int i, int j) const
+	{
+	    assert(this->indexIsValid(i, j));
+		return i + j * _SIZE_X;
+	};
+	inline void worldToCell(MyFloat x, MyFloat y, int* i, int* j) const
+	{
+		*i = x / _DELTA_X;
+		*j = y / _DELTA_Y;
+	};
+	inline void cellToWorld(int i, int j, MyFloat* x, MyFloat* y) const
+	{
+	    assert(this->indexIsValid(i, j));   
+		*x = i * _DELTA_X;
+		*y = j * _DELTA_Y;
+	};
+
+	inline bool indexIsValid(int i, int j) const
+	{
+	    return i >= 0 && i < _SIZE_X && j >= 0 && j < _SIZE_Y;
+	};
 
 	// Get
-	inline T value(int i, int j) const;
-	inline int sizeX() const;
-	inline int sizeY() const;
-    inline bool indexIsValid(int i, int j) const;
-
-	// Set
-	inline T& operator()(int i, int j);
+	inline int sizeX() const { return _SIZE_X; };
+	inline int sizeY() const { return _SIZE_Y; };
+    inline MyFloat deltaX() const { return _DELTA_X; };
+	inline MyFloat deltaY() const { return _DELTA_Y; };
+    inline MyFloat lengthX() const { return _SIZE_X * _DELTA_X; };
+	inline MyFloat lengthY() const { return _SIZE_Y * _DELTA_Y; };
 
 protected:
 	// Constants
 	int _SIZE_X;
 	int _SIZE_Y;
-
-	// Data
-	std::vector<T> data;
+	MyFloat _DELTA_X;
+	MyFloat _DELTA_Y;
 };
 
 template <class T>
-class SizedGrid : public Grid<T>
+class Grid : public GridInterface
 {
 public:
-	// Constructors / Destructor
-	SizedGrid(int size_x, int size_y, MyFloat delta_x, MyFloat delta_y);
-	~SizedGrid();
-	
+	Grid(int size_x, int size_y, MyFloat delta_x = 1, MyFloat delta_y = 1);
+	~Grid();
+
 	// Get
-	/** Value interpolated with world coordinates as input.
+	inline T value(int i, int j) const;
+    /** Value interpolated with world coordinates as input.
 		Reads from the four closest grid points.
 	*/
 	inline T valueInterpolated(MyFloat x, MyFloat y) const;
-	inline MyFloat deltaX() const;
-	inline MyFloat deltaY() const;
-	void worldToCell(MyFloat x, MyFloat y, int* i, int* j) const;
-	void cellToWorld(int i, int j, MyFloat* x, MyFloat* y) const;
-
+	
 	// Set
+	inline T& operator()(int i, int j);
 	/** Value interpolated with world coordinates as input.
 		Writes to the four closest grid points.
 	*/
 	inline void addToValueInterpolated(MyFloat x, MyFloat y, T value);
-private:
-	MyFloat _DELTA_X;
-	MyFloat _DELTA_Y;
+
+protected:
+	// Data
+	std::vector<T> data;
 };
 
 // The functions are defined here due to the template class.
 
 template <class T>
-Grid<T>::Grid(int size_x, int size_y) :
-	_SIZE_X(size_x),
-	_SIZE_Y(size_y)
+Grid<T>::Grid(int size_x, int size_y, MyFloat delta_x, MyFloat delta_y) :
+	GridInterface(size_x, size_y, delta_x, delta_y)
 {
-	data.resize(_SIZE_X * _SIZE_Y);
-	for (int i = 0; i < data.size(); ++i)
+	int n_elements = _SIZE_X * _SIZE_Y;
+    data.resize(n_elements);
+    for (int i = 0; i < n_elements; ++i)
 	{
-		data[i] = T(); // Call default constructor
+		data[i] = T();
 	}
 }
 
@@ -86,65 +109,13 @@ Grid<T>::~Grid()
 }
 
 template <class T>
-inline void Grid<T>::linearTo2D(int idx, int* i, int* j) const
-{
-	*i = idx % (_SIZE_X);
-	*j = idx / (_SIZE_X);
-}
-
-template <class T>
-inline int Grid<T>::twoDToLinear(int i, int j) const
-{
-    assert(this->indexIsValid(i, j));
-	return i + j * _SIZE_X;
-}
-
-template <class T>
 inline T Grid<T>::value(int i, int j) const
 {
 	return data[twoDToLinear(i, j)];
 }
 
 template <class T>
-inline int Grid<T>::sizeX() const
-{
-	return _SIZE_X;
-}
-
-template <class T>
-inline int Grid<T>::sizeY() const
-{
-	return _SIZE_Y;
-}
-
-template <class T>
-inline bool Grid<T>::indexIsValid(int i, int j) const
-{
-    return i >= 0 && i < _SIZE_X && j >= 0 && j < _SIZE_Y;
-}
-
-template <class T>
-inline T& Grid<T>::operator()(int i, int j)
-{
-	return data[twoDToLinear(i, j)];
-}
-
-template <class T>
-SizedGrid<T>::SizedGrid(int size_x, int size_y, MyFloat delta_x, MyFloat delta_y) :
-	Grid<T>(size_x, size_y),
-	_DELTA_X(delta_x),
-	_DELTA_Y(delta_y)
-{
-}
-
-template <class T>
-SizedGrid<T>::~SizedGrid()
-{
-
-}
-
-template <class T>
-inline T SizedGrid<T>::valueInterpolated(MyFloat x, MyFloat y) const
+inline T Grid<T>::valueInterpolated(MyFloat x, MyFloat y) const
 {
 	// Calculate indices
 	int i = x / _DELTA_X;
@@ -153,7 +124,7 @@ inline T SizedGrid<T>::valueInterpolated(MyFloat x, MyFloat y) const
 	MyFloat j_frac = y / _DELTA_Y - j;
     
     i = CLAMP(i, 0, this->_SIZE_X - 1);
-    j = CLAMP(j, 0, this->_SIZE_X - 1);
+    j = CLAMP(j, 0, this->_SIZE_Y - 1);
     int i_plus1 = CLAMP(i + 1, 0, this->_SIZE_X - 1);
     int j_plus1 = CLAMP(j + 1, 0, this->_SIZE_Y - 1);
     
@@ -173,35 +144,13 @@ inline T SizedGrid<T>::valueInterpolated(MyFloat x, MyFloat y) const
 }
 
 template <class T>
-inline MyFloat SizedGrid<T>::deltaX() const
+inline T& Grid<T>::operator()(int i, int j)
 {
-	return _DELTA_X;
+	return data[twoDToLinear(i, j)];
 }
 
 template <class T>
-inline MyFloat SizedGrid<T>::deltaY() const
-{
-	return _DELTA_Y;
-}
-
-template <class T>
-inline void SizedGrid<T>::worldToCell(MyFloat x, MyFloat y, int* i, int* j) const
-{
-	*i = x / _DELTA_X;
-	*j = y / _DELTA_Y;
-}
-
-template <class T>
-inline void SizedGrid<T>::cellToWorld(int i, int j, MyFloat* x, MyFloat* y) const
-{
-    assert(this->indexIsValid(i, j));
-    
-	*x = i * _DELTA_X;
-	*y = j * _DELTA_Y;
-}
-
-template <class T>
-inline void SizedGrid<T>::addToValueInterpolated(MyFloat x, MyFloat y, T value)
+inline void Grid<T>::addToValueInterpolated(MyFloat x, MyFloat y, T value)
 {
 	// Calculate indices
 	int i = x / _DELTA_X;

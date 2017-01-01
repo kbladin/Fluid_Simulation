@@ -15,6 +15,8 @@ public:
 		MyFloat x_max,
 		MyFloat y_min,
 		MyFloat y_max,
+		MyFloat x_velocity,
+		MyFloat y_velocity,
 		MyFloat time_step,
 		int max_spawns);
 	~FluidSource();
@@ -25,6 +27,8 @@ private:
 	MyFloat _x_max;
 	MyFloat _y_min;
 	MyFloat _y_max;
+	MyFloat _x_velocity;
+	MyFloat _y_velocity;
 	MyFloat _time_step;
 	MyFloat _time_since_last;
 	int _max_spawns;
@@ -39,7 +43,7 @@ public:
 		int size_y,
 		MyFloat length_x,
 		MyFloat length_y,
-		MyFloat density = 5);
+		MyFloat density);
 	~FluidDomain();
 
 	// To be implemented

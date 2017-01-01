@@ -7,7 +7,7 @@
 
 #include "MathDefinitions.h"
 
-class LevelSet : public SizedGrid<MyFloat>
+class LevelSet : public Grid<MyFloat>
 {
 public:
 	LevelSet(int size_x, int size_y, MyFloat length_x, MyFloat length_y);
@@ -17,12 +17,6 @@ public:
 
 	MyFloat computeUpwindGradientX(int i, int j, MyFloat vel_x);
 	MyFloat computeUpwindGradientY(int i, int j, MyFloat vel_y);
-
-	MyFloat lengthX() const;
-	MyFloat lengthY() const;
-private:
-	MyFloat _LENGTH_X;
-	MyFloat _LENGTH_Y;
 };
 
 #endif

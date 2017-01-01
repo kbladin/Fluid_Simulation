@@ -1,9 +1,7 @@
 #include <LevelSet.h>
 
 LevelSet::LevelSet(int size_x, int size_y, MyFloat length_x, MyFloat length_y) :
-	SizedGrid<MyFloat>(size_x, size_y, length_x / size_x, length_y / size_y),
-	_LENGTH_X(length_x),
-	_LENGTH_Y(length_y)
+	Grid<MyFloat>(size_x, size_y, length_x / size_x, length_y / size_y)
 {
 	for (int j = 0; j < _SIZE_Y; ++j)
 	{
@@ -58,14 +56,4 @@ MyFloat LevelSet::computeUpwindGradientY(int i, int j, MyFloat vel_y)
 		(*this)(i, j_plus1) - (*this)(i, j) :
 		(*this)(i, j) - (*this)(i, j_minus1);
 	return grad_y;
-}
-
-MyFloat LevelSet::lengthX() const
-{
-	return _LENGTH_X;
-}
-
-MyFloat LevelSet::lengthY() const
-{
-	return _LENGTH_Y;
 }

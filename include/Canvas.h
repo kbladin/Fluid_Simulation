@@ -14,6 +14,22 @@ public:
 	Color(MyFloat red, MyFloat green, MyFloat blue);
 	~Color();
 	MyFloat r, g, b;
+
+	inline Color& operator+=(Color& c)
+	{
+		r += c.r;
+		g += c.g;
+		b += c.b;
+		return *this;
+	};
+	inline Color operator*(MyFloat& s)
+	{
+		Color c = *this;
+		c.r *= s;
+		c.g *= s;
+		c.b *= s;
+		return c;
+	};
 private:
 };
 
@@ -26,6 +42,7 @@ public:
 	void drawPoint(int pos_x, int pos_y, int size);
 	void fillRectangle(int min_x, int min_y, int max_x, int max_y);
 	void setPixel(int i, int j, Color c);
+	void addToPixel(int i, int j, Color c);
 	void fill(Color c);
 
 	// Getters
