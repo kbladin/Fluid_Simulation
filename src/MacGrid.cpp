@@ -86,7 +86,7 @@ glm::dmat2 MacGrid::computeVelocityGradientMatrix(int i, int j)
 }
 */
 
-void MacGrid::swapBuffers()
+void MacGrid::swapVelocityBuffers()
 {
     _vel_x_front_buffer.swap(_vel_x_back_buffer);
     _vel_y_front_buffer.swap(_vel_y_back_buffer);

@@ -11,10 +11,7 @@ class FluidSource
 {
 public:
 	FluidSource(
-		MyFloat x_min,
-		MyFloat x_max,
-		MyFloat y_min,
-		MyFloat y_max,
+		BBox<MyFloat> area,
 		MyFloat x_velocity,
 		MyFloat y_velocity,
 		MyFloat time_step,
@@ -23,10 +20,7 @@ public:
 	void update(MarkerParticleSet& particle_set, MyFloat dt);
 	bool isFinished();
 private:
-	MyFloat _x_min;
-	MyFloat _x_max;
-	MyFloat _y_min;
-	MyFloat _y_max;
+	BBox<MyFloat> _area;
 	MyFloat _x_velocity;
 	MyFloat _y_velocity;
 	MyFloat _time_step;
@@ -35,7 +29,7 @@ private:
 	int _n_spawns;
 };
 
-class FluidDomain
+class FluidDomain : public GridInterface
 {
 public:
 	FluidDomain(
@@ -55,7 +49,6 @@ public:
 	MarkerParticleSet& markerParticleSet();
 	const MyFloat density();
 
-	void advectParticlesWithGrid(MyFloat dt);
 	void advectParticles(MyFloat dt);
 	void advectLevelSet(MyFloat dt);
 

@@ -1,18 +1,12 @@
 #include <FluidDomain.h>
 
 FluidSource::FluidSource(
-	MyFloat x_min,
-	MyFloat x_max,
-	MyFloat y_min,
-	MyFloat y_max,
+	BBox<MyFloat> area,
 	MyFloat x_velocity,
 	MyFloat y_velocity,
 	MyFloat time_step,
 	int max_spawns) :
-	_x_min(x_min),
-	_x_max(x_max),
-	_y_min(y_min),
-	_y_max(y_max),
+	_area(area),
 	_x_velocity(x_velocity),
 	_y_velocity(y_velocity),
 	_time_step(time_step),
@@ -37,9 +31,9 @@ void FluidSource::update(MarkerParticleSet& particle_set, MyFloat dt)
 	{
 		MyFloat x_incr = 1.0 / 80.0 / 3.0;
 		MyFloat y_incr = 1.0 / 80.0 / 3.0;
-		for (MyFloat y = _y_min; y < _y_max; y += y_incr)
+		for (MyFloat y = _area.y_min; y < _area.y_max; y += y_incr)
 		{
-			for (MyFloat x = _x_min; x < _x_max; x += x_incr)
+			for (MyFloat x = _area.x_min; x < _area.x_max; x += x_incr)
 			{
 				particle_set.addParticle(
 					MarkerParticle(x, y, _x_velocity, _y_velocity));
@@ -62,10 +56,11 @@ FluidDomain::FluidDomain(
 	int size_y,
 	MyFloat length_x,
 	MyFloat length_y,
-	MyFloat density)
-	: _density(density)
-    , _mac_grid(size_x, size_y, length_x, length_y)
-    , _level_set(size_x, size_y, length_x, length_y)
+	MyFloat density) :
+	GridInterface(size_x, size_y, length_x / size_x, length_y / size_y),
+	_density(density),
+    _mac_grid(size_x, size_y, length_x, length_y),
+    _level_set(size_x, size_y, length_x, length_y)
 {
 
 }
@@ -86,23 +81,6 @@ void FluidDomain::update(MyFloat dt)
 	for (int i = 0; i < _fluid_sources.size(); ++i)
 	{
 		_fluid_sources[i].update(_particle_set, dt);
-	}
-}
-
-void FluidDomain::advectParticlesWithGrid(MyFloat dt)
-{
-	for (auto it = _particle_set.begin(); it != _particle_set.end(); it++)
-	{
-		// Position in world
-		MyFloat pos_x = it->posX();
-		MyFloat pos_y = it->posY();
-
-		// Calculate new position (forward Euler)
-		pos_x += _mac_grid.velXInterpolated(pos_x, pos_y) * dt;
-		pos_y += _mac_grid.velYInterpolated(pos_x, pos_y) * dt;
-		
-		// Write data
-		it->setPosition(pos_x, pos_y);
 	}
 }
 

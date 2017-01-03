@@ -183,4 +183,10 @@ inline void Grid<T>::addToValueInterpolated(MyFloat x, MyFloat y, T value)
 	(*this)(i_plus1, j_plus1) 	+= value_11;
 }
 
+template <class T>
+struct BBox
+{
+	T x_min, x_max, y_min, y_max;
+};
+
 #endif

@@ -1,6 +1,10 @@
 # Some functions require a certain version of cmake (for example file GLOB )
 cmake_minimum_required(VERSION 2.8)
 
+# Set gcc / g++ compiler to be able to use openMP 
+#SET(CMAKE_C_COMPILER "/usr/local/bin/gcc-5")
+#SET(CMAKE_CXX_COMPILER "/usr/local/bin/g++-5")
+
 # Create the project
 set(PROJECT_NAME fluidsim)
 project(${PROJECT_NAME})
@@ -15,6 +19,14 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/modules)
 #SET(CUDA_PROPAGATE_HOST_FLAGS OFF)
 #CUDA_ADD_EXECUTABLE(cpp11 main.cu)
 
+#FIND_PACKAGE( OpenMP )
+#if(OPENMP_FOUND)
+#	message("OPENMP FOUND")
+#	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+#	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+#	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS} -fopenmp")
+#endif()
+
 #find_package(GLM REQUIRED)
 
 set(EIGEN3_INCLUDE_DIR "/usr/local/include/eigen3" CACHE PATH "description")
@@ -24,6 +36,8 @@ include_directories ( "${EIGEN3_INCLUDE_DIR}" )
 # Add include directories
 include_directories(${EIGEN3_INCLUDE_DIR})
 #include_directories(${GLM_INCLUDE_DIR})
+
+include_directories(${OPENMP_INCLUDE_DIR})
 
 # Our own include directory
 set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR}/include)

@@ -13,7 +13,7 @@
 class Renderer
 {
 public:
-	Renderer(MyFloat x_min, MyFloat y_min, MyFloat x_max, MyFloat y_max);
+	Renderer(BBox<MyFloat> area);
 	~Renderer();
 
 	void clearCanvas(Canvas& canvas);
@@ -26,10 +26,7 @@ public:
 	void writeCanvasToPpm( const char* file_path, Canvas& canvas);
 private:
 	// World coordinates, defines a quad to render
-	MyFloat _x_min;
-	MyFloat _y_min;
-	MyFloat _x_max;
-	MyFloat _y_max;
+	BBox<MyFloat> _area;
 };
 
 #endif

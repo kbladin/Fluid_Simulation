@@ -63,25 +63,25 @@ void Canvas::drawLine(int from_x, int from_y, int to_x, int to_y)
 void Canvas::drawPoint(int pos_x, int pos_y, int size)
 {
 	int min_x = pos_x - size / 2;
-	int min_y = pos_y - size / 2;
 	int max_x = pos_x + size / 2;
+	int min_y = pos_y - size / 2;
 	int max_y = pos_y + size / 2;
 	
-	fillRectangle(min_x, min_y, max_x, max_y);
+	fillRectangle({min_x, max_x, min_y, max_y});
 }
 
-void Canvas::fillRectangle(int min_x, int min_y, int max_x, int max_y)
+void Canvas::fillRectangle(BBox<int> rect)
 {
-    min_x = CLAMP(min_x, 0, _WIDTH - 1);
-    max_x = CLAMP(max_x, 0, _WIDTH - 1);
-    min_y = CLAMP(min_y, 0, _HEIGHT - 1);
-    max_y = CLAMP(max_y, 0, _HEIGHT - 1);
-    for (int j = min_y; j <= max_y; ++j)
+    rect.x_min = CLAMP(rect.x_min, 0, _WIDTH - 1);
+    rect.x_max = CLAMP(rect.x_max, 0, _WIDTH - 1);
+    rect.y_min = CLAMP(rect.y_min, 0, _HEIGHT - 1);
+    rect.y_max = CLAMP(rect.y_max, 0, _HEIGHT - 1);
+    for (int j = rect.y_min; j <= rect.y_max; ++j)
 	{
-		for (int i = min_x; i <= max_x; ++i)
+		for (int i = rect.x_min; i <= rect.x_max; ++i)
 		{
-            if (i == min_x || i == max_x ||
-                j == min_y || j == max_y)
+            if (i == rect.x_min || i == rect.x_max ||
+                j == rect.y_min || j == rect.y_max)
             { // On border, use line color
                 _pixel_data(i, j) = _line_color;
             }

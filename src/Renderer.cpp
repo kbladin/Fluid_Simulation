@@ -1,10 +1,7 @@
 #include <Renderer.h>
 
-Renderer::Renderer(MyFloat x_min, MyFloat y_min, MyFloat x_max, MyFloat y_max)
-	: _x_min(x_min)
-	, _y_min(y_min)
-	, _x_max(x_max)
-	, _y_max(y_max)
+Renderer::Renderer(BBox<MyFloat> area) :
+	_area(area)
 {
 
 }
@@ -24,11 +21,11 @@ void Renderer::renderGridCellsToCanvas(const MacGrid& grid, Canvas& canvas)
 	int grid_size_x = grid.sizeX();
 	int grid_size_y = grid.sizeY();
 
-	MyFloat scale_x = canvas.width() / (_x_max - _x_min);
-	MyFloat scale_y = canvas.height() / (_y_max - _y_min);
+	MyFloat scale_x = canvas.width() / (_area.x_max - _area.x_min);
+	MyFloat scale_y = canvas.height() / (_area.y_max - _area.y_min);
 
-	MyFloat translate_x = 0.5 * (_x_min * canvas.width());
-	MyFloat translate_y = 0.5 * (_y_min * canvas.height());
+	MyFloat translate_x = 0.5 * (_area.x_min * canvas.width());
+	MyFloat translate_y = 0.5 * (_area.y_min * canvas.height());
 
 	// Cell size in pixels
 	MyFloat cell_size_x = grid.deltaX() * scale_x;
@@ -49,11 +46,11 @@ void Renderer::renderGridCellsToCanvas(const MacGrid& grid, Canvas& canvas)
 			else // SOLID
 				fill_color = Color(0.5,0.5,0.5);
 			canvas.setFillColor(fill_color);
-			canvas.fillRectangle(
-				- translate_x + i * cell_size_x,
-				- translate_y + j * cell_size_y,
-				- translate_x + (i + 1) * cell_size_x,
-				- translate_y + (j + 1) * cell_size_y);
+            canvas.fillRectangle( {
+				static_cast<int>(- translate_x + i * cell_size_x),
+				static_cast<int>(- translate_x + (i + 1) * cell_size_x),
+                static_cast<int>(- translate_y + j * cell_size_y),
+                static_cast<int>(- translate_y + (j + 1) * cell_size_y) } );
 		}
 	}
 }
@@ -65,11 +62,11 @@ void Renderer::renderLevelSetFunctionValuesToCanvas(
 	int grid_size_x = level_set.sizeX();
 	int grid_size_y = level_set.sizeY();
 
-	MyFloat scale_x = canvas.width() / (_x_max - _x_min);
-	MyFloat scale_y = canvas.height() / (_y_max - _y_min);
+	MyFloat scale_x = canvas.width() / (_area.x_max - _area.x_min);
+	MyFloat scale_y = canvas.height() / (_area.y_max - _area.y_min);
 
-	MyFloat translate_x = 0.5 * (_x_min * canvas.width());
-	MyFloat translate_y = 0.5 * (_y_min * canvas.height());
+	MyFloat translate_x = 0.5 * (_area.x_min * canvas.width());
+	MyFloat translate_y = 0.5 * (_area.y_min * canvas.height());
 
 	// Cell size in pixels
 	MyFloat cell_size_x = level_set.deltaX() * scale_x;
@@ -84,11 +81,11 @@ void Renderer::renderLevelSetFunctionValuesToCanvas(
 			MyFloat value = level_set.value(i, j);
 			Color fill_color = Color(value, value, value);
 			canvas.setFillColor(fill_color);
-			canvas.fillRectangle(
-				- translate_x + i * cell_size_x,
-				- translate_y + j * cell_size_y,
-				- translate_x + (i + 1) * cell_size_x,
-				- translate_y + (j + 1) * cell_size_y);
+            canvas.fillRectangle( {
+                static_cast<int>(- translate_x + i * cell_size_x),
+                static_cast<int>(- translate_x + (i + 1) * cell_size_x),
+				static_cast<int>(- translate_y + j * cell_size_y),
+                static_cast<int>(- translate_y + (j + 1) * cell_size_y) });
 		}
 	}
 }
@@ -98,11 +95,11 @@ void Renderer::renderGridVelocitiesToCanvas(const MacGrid& grid, Canvas& canvas)
 	int grid_size_x = grid.sizeX();
 	int grid_size_y = grid.sizeY();
 
-	MyFloat scale_x = canvas.width() / (_x_max - _x_min);
-	MyFloat scale_y = canvas.height() / (_y_max - _y_min);
+	MyFloat scale_x = canvas.width() / (_area.x_max - _area.x_min);
+	MyFloat scale_y = canvas.height() / (_area.y_max - _area.y_min);
 
-	MyFloat translate_x = 0.5 * (_x_min * canvas.width());
-	MyFloat translate_y = 0.5 * (_y_min * canvas.height());
+	MyFloat translate_x = 0.5 * (_area.x_min * canvas.width());
+	MyFloat translate_y = 0.5 * (_area.y_min * canvas.height());
 
 	// Cell size in pixels
 	MyFloat cell_size_x = grid.deltaX() * scale_x;
@@ -145,11 +142,11 @@ void Renderer::renderParticlesToCanvas(
 	const MarkerParticleSet& particle_set,
 	Canvas& canvas)
 {
-	MyFloat scale_x = canvas.width() / (_x_max - _x_min);
-	MyFloat scale_y = canvas.height() / (_y_max - _y_min);
+	MyFloat scale_x = canvas.width() / (_area.x_max - _area.x_min);
+	MyFloat scale_y = canvas.height() / (_area.y_max - _area.y_min);
 
-	MyFloat translate_x = 0.5 * (_x_min * canvas.width());
-	MyFloat translate_y = 0.5 * (_y_min * canvas.height());
+	MyFloat translate_x = 0.5 * (_area.x_min * canvas.width());
+	MyFloat translate_y = 0.5 * (_area.y_min * canvas.height());
 
 	canvas.setLineColor(Color(0.3,0.6,0.9));
 	canvas.setFillColor(Color(0.3,0.6,0.9));
@@ -171,11 +168,11 @@ void Renderer::renderMetaBallsToCanvas(
     int w = canvas.width();
     int h = canvas.height();
     Grid<MyFloat> distance_field(w, h);
-	MyFloat scale_x = w / (_x_max - _x_min);
-	MyFloat scale_y = h / (_y_max - _y_min);
+	MyFloat scale_x = w / (_area.x_max - _area.x_min);
+	MyFloat scale_y = h / (_area.y_max - _area.y_min);
 
-	MyFloat translate_x = 0.5 * (_x_min * w);
-	MyFloat translate_y = 0.5 * (_y_min * h);
+	MyFloat translate_x = 0.5 * (_area.x_min * w);
+	MyFloat translate_y = 0.5 * (_area.y_min * h);
 
 	canvas.setLineColor(Color(0.5,0.9,1.0));
 	canvas.setFillColor(Color(0,0.5,0.7));

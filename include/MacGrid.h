@@ -7,7 +7,7 @@
 
 #include <iostream>
 #include <assert.h>
-#include <memory.h>
+#include <memory>
 
 #include "MathDefinitions.h"
 
@@ -156,11 +156,11 @@ public:
         // -0.5 Due to the MAC grid structure
     };
 	
-	void swapBuffers();
+	void swapVelocityBuffers();
 
 private:
 	// Velocity grids need front buffers and back buffers
-	// Normally read from front buffers and write to back buffers, then swap.
+	// Normally read from front buffers and write to back buffers, then swap
     std::unique_ptr< Grid<MyFloat> > _vel_x_front_buffer;
 	std::unique_ptr< Grid<MyFloat> > _vel_y_front_buffer;
 

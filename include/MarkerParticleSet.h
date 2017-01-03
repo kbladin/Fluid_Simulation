@@ -17,10 +17,10 @@ public:
 	~MarkerParticle();
 
 	// Getters
-	inline MyFloat posX() const {return _pos_x;};
-	inline MyFloat posY() const {return _pos_y;};
-	inline MyFloat velX() const {return _vel_x;};
-	inline MyFloat velY() const {return _vel_y;};
+	inline MyFloat posX() const { return _pos_x; };
+	inline MyFloat posY() const { return _pos_y; };
+	inline MyFloat velX() const { return _vel_x; };
+	inline MyFloat velY() const { return _vel_y; };
 
 	// Setters
 	inline void setPosition(MyFloat pos_x, MyFloat pos_y)
@@ -62,11 +62,11 @@ public:
 	typedef std::vector<MarkerParticle>::iterator iterator;
 	typedef std::vector<MarkerParticle>::const_iterator const_iterator;
 
-	inline MarkerParticleSet::iterator begin() {return _particles.begin();};
-	inline MarkerParticleSet::iterator end() {return _particles.end();};
+	inline MarkerParticleSet::iterator begin() { return _particles.begin(); };
+	inline MarkerParticleSet::iterator end() { return _particles.end(); };
 
-	inline MarkerParticleSet::const_iterator begin() const {return _particles.begin();};
-	inline MarkerParticleSet::const_iterator end() const {return _particles.end();};
+	inline MarkerParticleSet::const_iterator begin() const { return _particles.begin(); };
+	inline MarkerParticleSet::const_iterator end() const { return _particles.end(); };
 
 private:
 	std::vector<MarkerParticle> _particles;
