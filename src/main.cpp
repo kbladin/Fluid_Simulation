@@ -9,9 +9,9 @@
 #include <string>
 #include <time.h>
 
-static const int GRID_X_SIZE = 80;
-static const int GRID_Y_SIZE = 40;
-static const int WORLD_X_SIZE = 2;
+static const int GRID_X_SIZE = 20;
+static const int GRID_Y_SIZE = 20;
+static const int WORLD_X_SIZE = 1;
 static const int WORLD_Y_SIZE = 1;
 
 int main(int argc, char const *argv[])
@@ -27,7 +27,7 @@ int main(int argc, char const *argv[])
     fluid_domain.addFluidSource(FluidSource( { 4.0 / GRID_X_SIZE, 0.35, 2.0 / GRID_Y_SIZE, 1 - 2.0 / GRID_Y_SIZE }, 0.0, 0.0, 0.0, 1));
     //fluid_domain.addFluidSource(FluidSource( { 1.0 / GRID_X_SIZE, 0.2 }, 0.1, 0.4, 1.5, 5));
     //fluid_domain.addFluidSource(FluidSource( { 0.8, 1.0 - 1.0 / GRID_Y_SIZE, 0.1, 0.4 }, 0.0, 0.0, 1.5, 5));
-    fluid_domain.addFluidSource(FluidSource( { 0.8, 1.2, 0.1, 0.5 }, 0.0, 0.0, 2.0, 2));
+    //fluid_domain.addFluidSource(FluidSource( { 0.8, 1.2, 0.1, 0.5 }, 0.0, 0.0, 2.0, 2));
     
     //fluid_domain.addFluidSource(FluidSource( { 1.0 / GRID_X_SIZE, 2.0 / GRID_X_SIZE, 0.3, 0.35 }, 3.0, 0.0, 0.003, 300));
     //fluid_domain.addFluidSource(FluidSource( { 1.0 - 2.0 / GRID_X_SIZE, 1.0 - 1.0 / GRID_X_SIZE, 0.3, 0.35 }, -3.0, 0.0, 0.003, 300));

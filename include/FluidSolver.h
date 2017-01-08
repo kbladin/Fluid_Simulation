@@ -141,7 +141,7 @@ private:
     };
 
     //EulerExplicit<Vec2, Vec2> _ode_solver;
-	RK3<Vec2, Vec2> _ode_solver;
+	RK3<Vec2, Vec2, MyFloat> _ode_solver;
 	//RK4<Vec2, Vec2> _ode_solver;
 };
 
