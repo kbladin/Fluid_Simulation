@@ -4,8 +4,6 @@
 #include <Eigen/SparseCore>
 #include <math.h>
 
-#define CLAMP(x, low, high) (x < low ? low : (x > high ? high : x))
-
 //#define USE_DOUBLE_PRECISION
 #ifdef USE_DOUBLE_PRECISION
 typedef double MyFloat;
@@ -14,6 +12,11 @@ typedef Eigen::VectorXd VectorX;
 typedef float MyFloat;
 typedef Eigen::VectorXf VectorX;
 #endif
+
+inline MyFloat CLAMP(MyFloat d, MyFloat min, MyFloat max) {
+  const MyFloat t = d < min ? min : d;
+  return t > max ? max : t;
+}
 
 inline MyFloat smoothstep(MyFloat edge0, MyFloat edge1, MyFloat x)
 {

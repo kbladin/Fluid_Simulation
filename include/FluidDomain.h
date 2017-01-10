@@ -12,6 +12,8 @@ class FluidSource
 public:
 	FluidSource(
 		BBox<MyFloat> area,
+		MyFloat delta_x,
+		MyFloat delta_y,
 		MyFloat x_velocity,
 		MyFloat y_velocity,
 		MyFloat time_step,
@@ -23,6 +25,8 @@ private:
 	BBox<MyFloat> _area;
 	MyFloat _x_velocity;
 	MyFloat _y_velocity;
+	MyFloat _delta_x;
+	MyFloat _delta_y;
 	MyFloat _time_step;
 	MyFloat _time_since_last;
 	int _max_spawns;

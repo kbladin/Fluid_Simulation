@@ -9,10 +9,12 @@
 #include <string>
 #include <time.h>
 
-static const int GRID_X_SIZE = 20;
-static const int GRID_Y_SIZE = 20;
+static const int GRID_X_SIZE = 32;
+static const int GRID_Y_SIZE = 32;
 static const int WORLD_X_SIZE = 1;
 static const int WORLD_Y_SIZE = 1;
+static const double DELTA_X = WORLD_X_SIZE / double(GRID_X_SIZE);
+static const double DELTA_Y = WORLD_Y_SIZE / double(GRID_Y_SIZE);
 
 int main(int argc, char const *argv[])
 {
@@ -21,18 +23,18 @@ int main(int argc, char const *argv[])
     FluidSolverMemoryPool mem_pool(fluid_domain);
 	FluidSolver fluid_solver(mem_pool);
 	Renderer renderer({0, WORLD_X_SIZE, 0, WORLD_Y_SIZE});
-	Canvas canvas(GRID_X_SIZE * 5, GRID_Y_SIZE * 5);
+	Canvas canvas(WORLD_X_SIZE * 512, WORLD_Y_SIZE * 512);
 
 	// Setup
-    fluid_domain.addFluidSource(FluidSource( { 4.0 / GRID_X_SIZE, 0.35, 2.0 / GRID_Y_SIZE, 1 - 2.0 / GRID_Y_SIZE }, 0.0, 0.0, 0.0, 1));
-    //fluid_domain.addFluidSource(FluidSource( { 1.0 / GRID_X_SIZE, 0.2 }, 0.1, 0.4, 1.5, 5));
-    //fluid_domain.addFluidSource(FluidSource( { 0.8, 1.0 - 1.0 / GRID_Y_SIZE, 0.1, 0.4 }, 0.0, 0.0, 1.5, 5));
-    //fluid_domain.addFluidSource(FluidSource( { 0.8, 1.2, 0.1, 0.5 }, 0.0, 0.0, 2.0, 2));
+    fluid_domain.addFluidSource(FluidSource( { 2.0 / GRID_X_SIZE, 0.35, 2.0 / GRID_Y_SIZE, 1 - 2.0 / GRID_Y_SIZE }, DELTA_X, DELTA_Y, 0.0, 0.0, 0.0, 1));
+    //fluid_domain.addFluidSource(FluidSource( { 1.0 / GRID_X_SIZE, 0.2 }, DELTA_X, DELTA_Y, 0.1, 0.4, 1.5, 5));
+    //fluid_domain.addFluidSource(FluidSource( { 0.8, 1.0 - 1.0 / GRID_Y_SIZE, 0.1, 0.4 }, DELTA_X, DELTA_Y, 0.0, 0.0, 1.5, 5));
+    //fluid_domain.addFluidSource(FluidSource( { 0.8, 1.2, 0.1, 0.5 }, DELTA_X, DELTA_Y, 0.0, 0.0, 2.0, 2));
     
-    //fluid_domain.addFluidSource(FluidSource( { 1.0 / GRID_X_SIZE, 2.0 / GRID_X_SIZE, 0.3, 0.35 }, 3.0, 0.0, 0.003, 300));
-    //fluid_domain.addFluidSource(FluidSource( { 1.0 - 2.0 / GRID_X_SIZE, 1.0 - 1.0 / GRID_X_SIZE, 0.3, 0.35 }, -3.0, 0.0, 0.003, 300));
-    //fluid_domain.addFluidSource(FluidSource( { 0.17, 0.23, 1.0 / GRID_Y_SIZE, 2.0 / GRID_Y_SIZE }, 0.0, 3.0, 0.003, 300));
-    //fluid_domain.addFluidSource(FluidSource( { 1-0.23, 1-0.17, 1.0 / GRID_Y_SIZE, 2.0 / GRID_Y_SIZE }, 0.0, 3.0, 0.003, 300));
+    //fluid_domain.addFluidSource(FluidSource( { 1.0 / GRID_X_SIZE, 2.0 / GRID_X_SIZE, 0.3, 0.35 }, DELTA_X, DELTA_Y, 3.0, 0.0, 0.003, 300));
+    //fluid_domain.addFluidSource(FluidSource( { 1.0 - 2.0 / GRID_X_SIZE, 1.0 - 1.0 / GRID_X_SIZE, 0.3, 0.35 }, DELTA_X, DELTA_Y, -3.0, 0.0, 0.003, 300));
+    //fluid_domain.addFluidSource(FluidSource( { 0.17, 0.23, 1.0 / GRID_Y_SIZE, 2.0 / GRID_Y_SIZE }, DELTA_X, DELTA_Y, 0.0, 3.0, 0.003, 300));
+    //fluid_domain.addFluidSource(FluidSource( { 1-0.23, 1-0.17, 1.0 / GRID_Y_SIZE, 2.0 / GRID_Y_SIZE }, DELTA_X, DELTA_Y, 0.0, 3.0, 0.003, 300));
     
     // Prepare simulation
     int n_frames = 500;

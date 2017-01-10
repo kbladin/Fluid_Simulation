@@ -2,6 +2,8 @@
 
 FluidSource::FluidSource(
 	BBox<MyFloat> area,
+	MyFloat delta_x,
+	MyFloat delta_y,
 	MyFloat x_velocity,
 	MyFloat y_velocity,
 	MyFloat time_step,
@@ -9,6 +11,8 @@ FluidSource::FluidSource(
 	_area(area),
 	_x_velocity(x_velocity),
 	_y_velocity(y_velocity),
+	_delta_x(delta_x),
+	_delta_y(delta_y),
 	_time_step(time_step),
 	_time_since_last(0.0),
 	_max_spawns(max_spawns),
@@ -29,8 +33,9 @@ void FluidSource::update(MarkerParticleSet& particle_set, MyFloat dt)
 
 	if (_time_since_last >= _time_step)
 	{
-		MyFloat x_incr = 1.0 / 80.0 / 3.0;
-		MyFloat y_incr = 1.0 / 80.0 / 3.0;
+		// Roughly 6.25 particles per cell
+		MyFloat x_incr = _delta_x / 2.5;
+		MyFloat y_incr = _delta_y / 2.5;
 		for (MyFloat y = _area.y_min; y < _area.y_max; y += y_incr)
 		{
 			for (MyFloat x = _area.x_min; x < _area.x_max; x += x_incr)
