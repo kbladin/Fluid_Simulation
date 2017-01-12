@@ -247,7 +247,8 @@ corresponding to the right fluid domain!");
 		fluid_domain.markerParticleSet(),
 		pic_ratio);
     // Advect
-	fluid_domain.markerParticleSet().advect(dt);
+	fluid_domain.markerParticleSet().advectAndEnsureOutsideObstacles(
+		dt, fluid_domain.macGrid());
 }
 
 void FluidSolver::addExternalForce(

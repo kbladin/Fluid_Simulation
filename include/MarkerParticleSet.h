@@ -3,6 +3,7 @@
 
 #include <vector>
 
+#include "MacGrid.h"
 #include "MathDefinitions.h"
 
 class MarkerParticle
@@ -58,6 +59,7 @@ public:
 	void addParticle(MarkerParticle p);
 	void reserve(int particle_count);
 	void advect(MyFloat dt);
+	void advectAndEnsureOutsideObstacles(MyFloat dt, const MacGrid& mac_grid);
 
 	typedef std::vector<MarkerParticle>::iterator iterator;
 	typedef std::vector<MarkerParticle>::const_iterator const_iterator;

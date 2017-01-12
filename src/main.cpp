@@ -9,8 +9,8 @@
 #include <string>
 #include <time.h>
 
-static const int GRID_X_SIZE = 32;
-static const int GRID_Y_SIZE = 32;
+static const int GRID_X_SIZE = 64;
+static const int GRID_Y_SIZE = 64;
 static const int WORLD_X_SIZE = 1;
 static const int WORLD_Y_SIZE = 1;
 static const double DELTA_X = WORLD_X_SIZE / double(GRID_X_SIZE);
@@ -19,7 +19,7 @@ static const double DELTA_Y = WORLD_Y_SIZE / double(GRID_Y_SIZE);
 int main(int argc, char const *argv[])
 {
 	// Initialize
-	FluidDomain fluid_domain(GRID_X_SIZE, GRID_Y_SIZE, WORLD_X_SIZE, WORLD_Y_SIZE, 0.001);
+	FluidDomain fluid_domain(GRID_X_SIZE, GRID_Y_SIZE, WORLD_X_SIZE, WORLD_Y_SIZE, 0.01);
     FluidSolverMemoryPool mem_pool(fluid_domain);
 	FluidSolver fluid_solver(mem_pool);
 	Renderer renderer({0, WORLD_X_SIZE, 0, WORLD_Y_SIZE});
@@ -52,7 +52,7 @@ int main(int argc, char const *argv[])
 		for (MyFloat frame_time = 0; frame_time < seconds_per_frame; frame_time += dt)
 		{
 			// Calculate dt (for now just set it)
-			dt = 0.001;
+			dt = 0.01;
             dt = CLAMP(dt, 0, seconds_per_frame - frame_time);
 
 			// Update fluid domain (creates new fluid from sources)
@@ -62,7 +62,7 @@ int main(int argc, char const *argv[])
 			try
 			{
 				//fluid_solver.stepSemiLagrangian(fluid_domain, dt);
-				fluid_solver.stepPICFLIP(fluid_domain, dt, 0.02);
+				fluid_solver.stepPICFLIP(fluid_domain, dt, 0.05);
 			}
 			catch (const std::runtime_error& e)
 			{

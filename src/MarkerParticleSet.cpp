@@ -54,3 +54,19 @@ void MarkerParticleSet::advect(MyFloat dt)
 		it->advect(dt);
 	}
 }
+
+void MarkerParticleSet::advectAndEnsureOutsideObstacles(
+	MyFloat dt,
+	const MacGrid& mac_grid)
+{
+	for (auto it = _particles.begin(); it != _particles.end(); it++)
+	{
+		it->advect(dt);
+		int x = it->posX() / mac_grid.deltaX();
+		int y = it->posY() / mac_grid.deltaY();
+		if (mac_grid.cellType(x, y) == SOLID)
+		{
+			it->advect(-dt);
+		}
+	}
+}
