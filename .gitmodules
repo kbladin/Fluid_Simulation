@@ -1,0 +1,3 @@
+[submodule "ext/Simple_Graphics_Engine"]
+	path = ext/Simple_Graphics_Engine
+	url = git@github.com:kbladin/Simple_Graphics_Engine.git

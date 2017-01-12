@@ -1,43 +1,20 @@
 # Some functions require a certain version of cmake (for example file GLOB )
 cmake_minimum_required(VERSION 2.8)
 
-# Set gcc / g++ compiler to be able to use openMP 
-#SET(CMAKE_C_COMPILER "/usr/local/bin/gcc-5")
-#SET(CMAKE_CXX_COMPILER "/usr/local/bin/g++-5")
+# Build options
+option(BUILD_OPENGL_EXAMPLE "Build OpenGL example." OFF)
 
 # Create the project
 set(PROJECT_NAME fluidsim)
 project(${PROJECT_NAME})
 
 # Add the external module path
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/modules)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake/modules)
 
 # Find external packages
-
-#find_package(CUDA)
-#list(APPEND CUDA_NVCC_FLAGS "-arch=sm_20;-std=c++11;-O2;-DVERBOSE")
-#SET(CUDA_PROPAGATE_HOST_FLAGS OFF)
-#CUDA_ADD_EXECUTABLE(cpp11 main.cu)
-
-#FIND_PACKAGE( OpenMP )
-#if(OPENMP_FOUND)
-#	message("OPENMP FOUND")
-#	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-#	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-#	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS} -fopenmp")
-#endif()
-
-#find_package(GLM REQUIRED)
-
-set(EIGEN3_INCLUDE_DIR "/usr/local/include/eigen3" CACHE PATH "description")
-
-include_directories ( "${EIGEN3_INCLUDE_DIR}" )
-
-# Add include directories
-include_directories(${EIGEN3_INCLUDE_DIR})
-#include_directories(${GLM_INCLUDE_DIR})
-
-include_directories(${OPENMP_INCLUDE_DIR})
+find_package( PkgConfig )
+pkg_check_modules( EIGEN3 REQUIRED eigen3 )
+include_directories(${EIGEN3_INCLUDE_DIRS})
 
 # Our own include directory
 set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR}/include)
@@ -47,27 +24,33 @@ include_directories(${COMMON_INCLUDES})
 set(CMAKE_CXX_FLAGS "-g")
 
 # Creating our own ${PROJECCT_NAME} library
-# (Detach it from main function and include it to make it modular,
-# for example for the use of testing).
 file(GLOB ${PROJECCT_NAME}_lib_SOURCES ${PROJECT_SOURCE_DIR}/src/*.cpp)
 file(GLOB ${PROJECCT_NAME}_lib_HEADERS ${PROJECT_SOURCE_DIR}/include/*.h)
-# We do not want main.cpp in the library
-file(GLOB to_remove ${PROJECT_SOURCE_DIR}/src/main.cpp)
-list(REMOVE_ITEM ${PROJECCT_NAME}_lib_SOURCES ${to_remove})
-list(REMOVE_ITEM ${PROJECCT_NAME}_lib_HEADERS ${to_remove})
 add_library(${PROJECT_NAME}_lib
 	${${PROJECCT_NAME}_lib_SOURCES}
 	${${PROJECCT_NAME}_lib_HEADERS})
+set_target_properties(${PROJECT_NAME}_lib PROPERTIES COMPILE_FLAGS "-std=c++14")
 
-# Add program executable
-add_executable(${PROJECT_NAME} src/main.cpp)
-target_link_libraries(${PROJECT_NAME}
+# Add program executable (all examples)
+# Simple example
+add_executable(${PROJECT_NAME}_simple examples/simple.cpp)
+target_link_libraries(${PROJECT_NAME}_simple
 	${PROJECT_NAME}_lib
 	)
+set_target_properties(${PROJECT_NAME}_simple PROPERTIES COMPILE_FLAGS "-std=c++14")
 
-# C++14 compatability
-set_target_properties(${PROJECT_NAME}_lib PROPERTIES COMPILE_FLAGS "-std=c++14")
-set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS "-std=c++14")
+# OpenGL example
+if(BUILD_OPENGL_EXAMPLE)
+	find_package(GLFW3 REQUIRED)
+  	include_directories(${GLFW_INCLUDE_DIRS})
 
-#LDFLAGS:  -L/usr/local/opt/superlu43/lib
-#CPPFLAGS: -I/usr/local/opt/superlu43/include
+	add_subdirectory(${PROJECT_SOURCE_DIR}/ext/Simple_Graphics_Engine)
+	include_directories(${SGE_INCLUDE_DIRS})
+	add_executable(${PROJECT_NAME}_openGL examples/openGL.cpp)
+	target_link_libraries(${PROJECT_NAME}_openGL
+		${PROJECT_NAME}_lib
+		SGE
+		${GLFW_LIBRARIES}
+		)
+	set_target_properties(${PROJECT_NAME}_openGL PROPERTIES COMPILE_FLAGS "-std=c++14")
+endif()
