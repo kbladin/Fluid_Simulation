@@ -46,11 +46,23 @@ if(BUILD_OPENGL_EXAMPLE)
 
 	add_subdirectory(${PROJECT_SOURCE_DIR}/ext/Simple_Graphics_Engine)
 	include_directories(${SGE_INCLUDE_DIRS})
-	add_executable(${PROJECT_NAME}_openGL examples/openGL.cpp)
-	target_link_libraries(${PROJECT_NAME}_openGL
+
+	file(GLOB ${PROJECCT_NAME}_openGL_example_SOURCES
+		${PROJECT_SOURCE_DIR}/examples/opengl_example/*.cpp)
+	file(GLOB ${PROJECCT_NAME}_openGL_example_HEADERS
+		${PROJECT_SOURCE_DIR}/examples/opengl_example/*.h)
+
+	add_executable(${PROJECT_NAME}_openGL_example
+		${${PROJECCT_NAME}_openGL_example_SOURCES}
+		${${PROJECCT_NAME}_openGL_example_HEADERS})
+	target_link_libraries(${PROJECT_NAME}_openGL_example
 		${PROJECT_NAME}_lib
 		SGE
 		${GLFW_LIBRARIES}
 		)
-	set_target_properties(${PROJECT_NAME}_openGL PROPERTIES COMPILE_FLAGS "-std=c++14")
+	set_target_properties(${PROJECT_NAME}_openGL_example
+		PROPERTIES COMPILE_FLAGS "-std=c++14")
+	target_compile_definitions(${PROJECT_NAME}_openGL_example
+		PRIVATE PROJECT_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
+
 endif()

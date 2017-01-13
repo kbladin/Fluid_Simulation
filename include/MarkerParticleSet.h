@@ -64,6 +64,8 @@ public:
 	typedef std::vector<MarkerParticle>::iterator iterator;
 	typedef std::vector<MarkerParticle>::const_iterator const_iterator;
 
+	inline int size() const { return _particles.size(); };
+	
 	inline MarkerParticleSet::iterator begin() { return _particles.begin(); };
 	inline MarkerParticleSet::iterator end() { return _particles.end(); };
 

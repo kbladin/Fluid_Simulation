@@ -112,7 +112,7 @@ corresponding to the right fluid domain!");
 	// (should be done on a divergence free field, therefore done first)
 	advectVelocitySemiLagrangian(fluid_domain.macGrid(), dt);
 	// Add external force
-	addExternalAcceleration(fluid_domain.macGrid(), 0, 9.82, dt);
+	addExternalAcceleration(fluid_domain.macGrid(), 0, -9.82, dt);
     // Extend velocities outside of liquid cells so that liquid can flow
     //extendVelocityAvarageing(fluid_domain.macGrid(), 2);
 	//extendVelocityIndividual(fluid_domain.macGrid(), 2);
@@ -151,7 +151,7 @@ corresponding to the right fluid domain!");
 		fluid_domain.macGrid());
 	
 	// Resolve forces on grid
-    addExternalAcceleration(fluid_domain.macGrid(), 0, 9.82, dt);
+    addExternalAcceleration(fluid_domain.macGrid(), 0, -9.82, dt);
     enforceDirichlet(fluid_domain.macGrid());
     extendVelocityIndividual(fluid_domain.macGrid(), 2);
 	pressureSolve(
@@ -189,7 +189,7 @@ corresponding to the right fluid domain!");
 	// Save velocity buffer
 	fluid_domain.macGrid().updatePreviousVelocityBuffer();
 	// Resolve forces on grid
-    addExternalAcceleration(fluid_domain.macGrid(), 0, 9.82, dt);
+    addExternalAcceleration(fluid_domain.macGrid(), 0, -9.82, dt);
     enforceDirichlet(fluid_domain.macGrid());
     extendVelocityIndividual(fluid_domain.macGrid(), 2);
 	pressureSolve(
@@ -230,7 +230,7 @@ corresponding to the right fluid domain!");
 	// Save velocity buffer
 	fluid_domain.macGrid().updatePreviousVelocityBuffer();
 	// Resolve forces on grid
-	addExternalAcceleration(fluid_domain.macGrid(), 0, 9.82, dt);
+	addExternalAcceleration(fluid_domain.macGrid(), 0, -9.82, dt);
     enforceDirichlet(fluid_domain.macGrid());
     extendVelocityIndividual(fluid_domain.macGrid(), 2);
 	pressureSolve(
