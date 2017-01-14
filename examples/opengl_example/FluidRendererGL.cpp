@@ -7,18 +7,21 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
 
-FluidMesh::FluidMesh()
+FluidMesh::FluidMesh(MyFloat length_x, MyFloat length_y) :
+	_aabb(glm::vec3(0, 0, 0), glm::vec3(length_x, length_y, 0))
 {
+
 }
 
 FluidMesh::~FluidMesh()
 {
+
 }
 
-void FluidMesh::update(const MarkerParticleSet& particle_set)
+void FluidMesh::updateParticleSet(const MarkerParticleSet& particle_set)
 {
 	std::vector<glm::vec3> points;
-	points.resize(particle_set.size());
+	points.reserve(particle_set.size());
 	for (auto it = particle_set.begin(); it != particle_set.end(); it++)
 	{
 		points.push_back(glm::vec3(it->posX(), it->posY(),0));
@@ -26,7 +29,7 @@ void FluidMesh::update(const MarkerParticleSet& particle_set)
 	_mesh.update(points);
 }
 
-void FluidMesh::render(glm::mat4 M)
+void FluidMesh::execute()
 {
     GLuint program_ID = ShaderManager::instance()->getShader("render_cpu_particles");
 	
@@ -37,19 +40,37 @@ void FluidMesh::render(glm::mat4 M)
 		glGetUniformLocation(program_ID, "M"),
 		1,
 		GL_FALSE,
-		&transform_matrix[0][0]);
+		&relativeTransform()[0][0]);
     
-	glDisable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LESS);
-	glDisable(GL_CULL_FACE);
 	glEnable(GL_BLEND);
+	glDisable(GL_DEPTH_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
 	_mesh.render();
 }
 
+bool FluidMesh::intersects(glm::vec3 origin, glm::vec3 direction, glm::vec2* st) const
+{
+	glm::vec3 origin_model_space = glm::vec3(
+		glm::inverse(absoluteTransform()) * glm::vec4(origin, 1));
+	glm::vec3 direction_model_space = glm::vec3(
+		glm::inverse(absoluteTransform()) * glm::vec4(direction, 0));
+	float t;
+	if (_aabb.intersects(origin_model_space, direction_model_space, &t))
+	{
+        glm::vec3 intersection_point = origin_model_space + t * direction_model_space;
+        *st = glm::vec2(intersection_point);
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
 FluidRendererGL::FluidRendererGL(int size_x, int size_y, MyFloat length_x, MyFloat length_y) :
-	SimpleGraphicsEngine(size_x, size_y)
+	SimpleGraphicsEngine(size_x, size_y),
+	_fluid_mesh(length_x, length_y)
 {
 	ShaderManager::instance()->loadShader(
 		"render_cpu_particles",
@@ -59,18 +80,16 @@ FluidRendererGL::FluidRendererGL(int size_x, int size_y, MyFloat length_x, MyFlo
 		nullptr,
 		(std::string(PROJECT_SOURCE_DIR) + "/shaders/render_cpu_particles.frag").c_str());
 
-	_fluid_mesh = std::make_shared<FluidMesh>();
-	
-	//camera->addToShader(ShaderManager::instance()->getShader("render_cpu_particles"));
-	viewspace_ortho_camera->addToShader(ShaderManager::instance()->getShader("render_cpu_particles"));
+	perspective_camera.addToShader(ShaderManager::instance()->getShader("render_cpu_particles"));
+	//viewspace_ortho_camera.addToShader(ShaderManager::instance()->getShader("render_cpu_particles"));
 
-	//scene->addChild(_fluid_mesh);
-	view_space->addChild(_fluid_mesh.get());
+	scene.addChild(&_fluid_mesh);
+	//view_space.addChild(&_fluid_mesh);
 
-    _fluid_mesh->transform_matrix *= glm::scale(2.0f * glm::vec3(1/length_x, 1/length_y, 1));
-    _fluid_mesh->transform_matrix *= glm::translate(glm::vec3(-length_x/2, -length_y/2, 0));
+    //_fluid_mesh.transform_matrix *= glm::scale(2.0f * glm::vec3(1/length_x, 1/length_y, 1));
+    _fluid_mesh.setTransform(glm::translate(glm::vec3(-length_x/2, -length_y/2, 0)));
     
-    //camera->transform_matrix = glm::inverse(glm::lookAt(glm::vec3(2.0f,1.0f,2.0f), glm::vec3(1.0f,0.0f,0.0f), glm::vec3(0.0f,1.0f,0.0f)));
+    perspective_camera.setTransform(glm::inverse(glm::lookAt(glm::vec3(0.0f,0.0f,1.0f), glm::vec3(0.0f,0.0f,0.0f), glm::vec3(0.0f,1.0f,0.0f))));
 }
 
 FluidRendererGL::~FluidRendererGL()
@@ -79,8 +98,15 @@ FluidRendererGL::~FluidRendererGL()
 
 void FluidRendererGL::renderParticles(const MarkerParticleSet& particle_set)
 {
-	_fluid_mesh->update(particle_set);
+	_fluid_mesh.updateParticleSet(particle_set);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable( GL_BLEND );
 	render();
+}
+
+bool FluidRendererGL::intersectsFluidMesh(glm::vec2 ndc_position, glm::vec2* st) const
+{
+	glm::vec3 origin, direction;
+	perspective_camera.unproject(ndc_position, &origin, &direction);
+	return _fluid_mesh.intersects(origin, direction, st);
 }

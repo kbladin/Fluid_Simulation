@@ -56,8 +56,9 @@ public:
 	MarkerParticleSet(int size = 0);
 	~MarkerParticleSet();
 
-	void addParticle(MarkerParticle p);
-	void reserve(int particle_count);
+	void addParticle(MarkerParticle p) 	{ _particles.push_back(p); };
+	void reserve(int particle_count)	{ _particles.reserve(particle_count); };
+	void clear() 						{ _particles.clear(); };
 	void advect(MyFloat dt);
 	void advectAndEnsureOutsideObstacles(MyFloat dt, const MacGrid& mac_grid);
 

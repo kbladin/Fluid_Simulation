@@ -16,5 +16,5 @@ void main(){
 
 	// Position and size of point
 	gl_Position = P * vertex_position_viewspace;
-	gl_PointSize = 20;
+	gl_PointSize = 10;
 }

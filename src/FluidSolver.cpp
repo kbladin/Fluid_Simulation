@@ -210,8 +210,7 @@ corresponding to the right fluid domain!");
 
 void FluidSolver::stepPICFLIP(
 	FluidDomain& fluid_domain,
-	MyFloat dt,
-	MyFloat pic_ratio)
+	MyFloat dt)
 {
 	if (!validate(fluid_domain))
 	{
@@ -245,7 +244,7 @@ corresponding to the right fluid domain!");
 	transferVelocityToParticlesPICFLIP(
 		fluid_domain.macGrid(),
 		fluid_domain.markerParticleSet(),
-		pic_ratio);
+		fluid_domain.picRatio());
     // Advect
 	fluid_domain.markerParticleSet().advectAndEnsureOutsideObstacles(
 		dt, fluid_domain.macGrid());

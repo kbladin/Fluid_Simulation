@@ -4,6 +4,7 @@
 #include <SGE/SimpleGraphicsEngine.h>
 #include <SGE/ShaderManager.h>
 #include <SGE/Mesh.h>
+#include <SGE/BoundingBox.h>
 
 #include <MarkerParticleSet.h>
 
@@ -12,14 +13,16 @@
 class FluidMesh : public Object3D
 {
 public:
-	FluidMesh();
+	FluidMesh(MyFloat length_x, MyFloat length_y);
 	~FluidMesh();
 	
-	void update(const MarkerParticleSet& particle_set);
-	virtual void render(glm::mat4 M);
+	void updateParticleSet(const MarkerParticleSet& particle_set);
+	virtual void execute();
 	
+	bool intersects(glm::vec3 origin, glm::vec3 direction, glm::vec2* st) const;
 private:
 	CPUPointCloudMesh _mesh;
+	BoundingBox _aabb;
 };
 
 // This class extends SimpleGraphicsEngine,
@@ -31,8 +34,9 @@ public:
 	~FluidRendererGL();
 
 	void renderParticles(const MarkerParticleSet& particle_set);
+	bool intersectsFluidMesh(glm::vec2 ndc_position, glm::vec2* st) const;
 private:
-	std::shared_ptr<FluidMesh> _fluid_mesh;
+	FluidMesh _fluid_mesh;
 };
 
 #endif

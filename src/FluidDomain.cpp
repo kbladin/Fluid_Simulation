@@ -51,19 +51,16 @@ void FluidSource::update(MarkerParticleSet& particle_set, MyFloat dt)
 	_time_since_last += dt;
 }
 
-bool FluidSource::isFinished()
-{
-	return _max_spawns != -1 && _n_spawns >= _max_spawns;
-}
-
 FluidDomain::FluidDomain(
 	int size_x,
 	int size_y,
 	MyFloat length_x,
 	MyFloat length_y,
-	MyFloat density) :
+	MyFloat density,
+    MyFloat pic_ratio) :
 	GridInterface(size_x, size_y, length_x / size_x, length_y / size_y),
 	_density(density),
+    _pic_ratio(pic_ratio),
     _mac_grid(size_x, size_y, length_x, length_y),
     _level_set(size_x, size_y, length_x, length_y)
 {
@@ -87,6 +84,21 @@ void FluidDomain::update(MyFloat dt)
 	{
 		_fluid_sources[i].update(_particle_set, dt);
 	}
+}
+
+void FluidDomain::clearFluidSources()
+{
+	_fluid_sources.clear();
+}
+
+void FluidDomain::resetParticleSet()
+{
+	_particle_set.clear();
+}
+
+void FluidDomain::setPicRatio(MyFloat pic_ratio)
+{
+	_pic_ratio = CLAMP(pic_ratio, 0, 1);
 }
 
 void FluidDomain::advectLevelSet(MyFloat dt)
@@ -182,7 +194,12 @@ MarkerParticleSet& FluidDomain::markerParticleSet()
 	return _particle_set;
 }
 
-const MyFloat FluidDomain::density()
+const MyFloat FluidDomain::density() const
 {
 	return _density;
+}
+
+const MyFloat FluidDomain::picRatio() const
+{
+	return _pic_ratio;
 }

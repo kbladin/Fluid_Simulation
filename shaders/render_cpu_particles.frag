@@ -8,5 +8,5 @@ void main(){
   float r = length(coord);
   if(r > 1) // Outside of circle radius?
     discard;
-  color = vec4(0.05,0.2,0.5,  (1 - r));
+  color = vec4(0.05,0.2,0.5, (1 - r));
 }

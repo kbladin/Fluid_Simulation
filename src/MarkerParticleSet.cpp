@@ -37,16 +37,6 @@ MarkerParticleSet::~MarkerParticleSet()
 
 }
 
-void MarkerParticleSet::addParticle(MarkerParticle p)
-{
-	_particles.push_back(p);
-}
-
-void MarkerParticleSet::reserve(int particle_count)
-{
-	_particles.reserve(particle_count);
-}
-
 void MarkerParticleSet::advect(MyFloat dt)
 {
 	for (auto it = _particles.begin(); it != _particles.end(); it++)

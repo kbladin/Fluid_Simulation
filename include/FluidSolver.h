@@ -51,7 +51,7 @@ public:
 	void stepSemiLagrangian(FluidDomain& fluid_domain, MyFloat dt);
 	void stepPIC(FluidDomain& fluid_domain, MyFloat dt);
 	void stepFLIP(FluidDomain& fluid_domain, MyFloat dt);
-	void stepPICFLIP(FluidDomain& fluid_domain, MyFloat dt, MyFloat pic_ratio);
+	void stepPICFLIP(FluidDomain& fluid_domain, MyFloat dt);
 private:
 	bool validate(const FluidDomain& fluid_domain);
 	void addExternalForce(

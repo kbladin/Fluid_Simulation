@@ -20,7 +20,8 @@ public:
 		int max_spawns);
 	~FluidSource();
 	void update(MarkerParticleSet& particle_set, MyFloat dt);
-	bool isFinished();
+	inline bool isFinished() { return _max_spawns != -1 && _n_spawns >= _max_spawns; };
+	inline void resetSpawns() { _n_spawns = 0; };
 private:
 	BBox<MyFloat> _area;
 	MyFloat _x_velocity;
@@ -41,17 +42,21 @@ public:
 		int size_y,
 		MyFloat length_x,
 		MyFloat length_y,
-		MyFloat density);
+		MyFloat density,
+		MyFloat pic_ratio);
 	~FluidDomain();
 
-	// To be implemented
 	void addFluidSource(FluidSource fluid_source);
 	void update(MyFloat dt);
+	void clearFluidSources();
+	void resetParticleSet();
+	void setPicRatio(MyFloat pic_ratio);
 	
 	MacGrid& macGrid();
 	LevelSet& levelSet();
 	MarkerParticleSet& markerParticleSet();
-	const MyFloat density();
+	const MyFloat density() const;
+	const MyFloat picRatio() const;
 
 	void advectParticles(MyFloat dt);
 	void advectLevelSet(MyFloat dt);
@@ -59,8 +64,8 @@ public:
 	void classifyCells(LevelSet& levelSet);
 	void classifyCells(MarkerParticleSet& particle_set);
 private:
-	
 	MyFloat _density;
+	MyFloat _pic_ratio;
 	MacGrid _mac_grid;
 	LevelSet _level_set;
 	MarkerParticleSet _particle_set;
