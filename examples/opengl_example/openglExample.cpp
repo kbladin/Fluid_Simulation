@@ -17,8 +17,8 @@
 #include <gl/glew.h>
 #include <gl/glfw3.h>
 
-static const int GRID_X_SIZE = 90;
-static const int GRID_Y_SIZE = 60;
+static const int GRID_X_SIZE = 60;
+static const int GRID_Y_SIZE = 40;
 static const double WORLD_X_SIZE = 1.5;
 static const double WORLD_Y_SIZE = 1;
 static const double DELTA_X = WORLD_X_SIZE / double(GRID_X_SIZE);
@@ -38,6 +38,7 @@ int main(int argc, char const *argv[])
 	FluidRendererGL renderer(512 * WORLD_X_SIZE, 512 * WORLD_Y_SIZE, WORLD_X_SIZE, WORLD_Y_SIZE);
     FluidInteractionHandler interaction_handler(&fluid_domain, &renderer);
 	window.setInteractionHandler(&interaction_handler);
+	window.setController(renderer.controller());
 	
 
     // Prepare simulation
@@ -60,7 +61,7 @@ int main(int argc, char const *argv[])
 			fluid_solver.stepPICFLIP(fluid_domain, dt);
 		}
 		// Render
-		renderer.renderParticles(fluid_domain.markerParticleSet());
+		renderer.renderFluid(fluid_domain);
         return;
     };
 

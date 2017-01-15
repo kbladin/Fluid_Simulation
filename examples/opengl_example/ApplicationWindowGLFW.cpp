@@ -1,6 +1,7 @@
 #include "ApplicationWindowGLFW.h"
 
 FluidInteractionHandler* ApplicationWindowGLFW::_interaction_handler;
+Controller* ApplicationWindowGLFW::_controller;
 
 ApplicationWindowGLFW::ApplicationWindowGLFW(int width, int height)
 {
@@ -78,6 +79,12 @@ void ApplicationWindowGLFW::run(std::function<void(void)> f)
 void ApplicationWindowGLFW::setInteractionHandler(FluidInteractionHandler* interaction_handler)
 {
   _interaction_handler = interaction_handler;
+  windowSizeCallback(_window, 0, 0); // Just to refresh
+}
+
+void ApplicationWindowGLFW::setController(Controller* controller)
+{
+  _controller = controller;
 }
 
 void ApplicationWindowGLFW::mousePosCallback(
@@ -85,13 +92,18 @@ void ApplicationWindowGLFW::mousePosCallback(
   double x,
   double y)
 {
+  int size_x, size_y;
+  glfwGetWindowSize(window, &size_x, &size_y);
+  // Convert to NDC
+  x = (x / size_x - 0.5) * 2;
+  y = (1 - (y / size_y) - 0.5) * 2;
   if (_interaction_handler)
   {
-    int size_x, size_y;
-    glfwGetWindowSize(window, &size_x, &size_y);
-    _interaction_handler->mousePosCallback(
-      (x / size_x - 0.5) * 2,
-      (1 - (y / size_y) - 0.5) * 2);
+    _interaction_handler->mousePosCallback(x, y);
+  }
+  if (_controller)
+  {
+    _controller->mousePosCallback(x, y);
   }
 }
 
@@ -105,6 +117,11 @@ void ApplicationWindowGLFW::mouseButtonCallback(
   {
     _interaction_handler->mouseButtonCallback(button, action, mods);
   }
+  if (_controller)
+  {
+    _controller->mouseButtonCallback(
+      static_cast<MouseButton>(button), static_cast<KeyAction>(action));
+  }
 }
 
 void ApplicationWindowGLFW::mouseScrollCallback(
@@ -115,6 +132,10 @@ void ApplicationWindowGLFW::mouseScrollCallback(
   if (_interaction_handler)
   {
     _interaction_handler->mouseScrollCallback(dx, dy);
+  }
+  if (_controller)
+  {
+    _controller->mouseScrollCallback(dx, dy);
   }
 }
 
@@ -129,6 +150,11 @@ void ApplicationWindowGLFW::keyCallback(
   {
     _interaction_handler->keyCallback(key, scancode, action, mods);
   }
+  if (_controller)
+  {
+    _controller->keyCallback(
+      static_cast<Key>(key), static_cast<KeyAction>(action));
+  }
 }
 
 void ApplicationWindowGLFW::windowSizeCallback(
@@ -136,8 +162,14 @@ void ApplicationWindowGLFW::windowSizeCallback(
   int width,
   int height)
 {
+  int frame_buffer_size_x, frame_buffer_size_y;
+  glfwGetFramebufferSize(window, &frame_buffer_size_x, &frame_buffer_size_y);
   if (_interaction_handler)
   {
-    _interaction_handler->windowSizeCallback(width, height);
+    _interaction_handler->windowSizeCallback(frame_buffer_size_x, frame_buffer_size_y);
+  }
+  if (_controller)
+  {
+    _controller->windowSizeCallback(frame_buffer_size_x, frame_buffer_size_y);
   }
 }

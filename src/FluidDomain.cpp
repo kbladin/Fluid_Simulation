@@ -194,6 +194,21 @@ MarkerParticleSet& FluidDomain::markerParticleSet()
 	return _particle_set;
 }
 
+const MacGrid& FluidDomain::macGrid() const
+{
+	return _mac_grid;
+}
+
+const LevelSet& FluidDomain::levelSet() const
+{
+	return _level_set;
+}
+
+const MarkerParticleSet& FluidDomain::markerParticleSet() const
+{
+	return _particle_set;
+}
+
 const MyFloat FluidDomain::density() const
 {
 	return _density;

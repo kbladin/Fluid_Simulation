@@ -5,8 +5,9 @@
 #include <SGE/ShaderManager.h>
 #include <SGE/Mesh.h>
 #include <SGE/BoundingBox.h>
+#include <SGE/Controller.h>
 
-#include <MarkerParticleSet.h>
+#include <FluidDomain.h>
 
 #include <memory>
 
@@ -16,13 +17,14 @@ public:
 	FluidMesh(MyFloat length_x, MyFloat length_y);
 	~FluidMesh();
 	
-	void updateParticleSet(const MarkerParticleSet& particle_set);
+	void updateState(const FluidDomain& fluid_domain);
 	virtual void execute();
 	
 	bool intersects(glm::vec3 origin, glm::vec3 direction, glm::vec2* st) const;
 private:
 	CPUPointCloudMesh _mesh;
 	BoundingBox _aabb;
+	float _color_blend;
 };
 
 // This class extends SimpleGraphicsEngine,
@@ -30,13 +32,17 @@ private:
 class FluidRendererGL : public SimpleGraphicsEngine
 {
 public:
-	FluidRendererGL(int size_x, int size_y, MyFloat length_x, MyFloat length_y);
+	FluidRendererGL(
+		int size_x, int size_y, MyFloat length_x, MyFloat length_y);
 	~FluidRendererGL();
 
-	void renderParticles(const MarkerParticleSet& particle_set);
+	Controller* controller();
+
+	void renderFluid(const FluidDomain& fluid_domain);
 	bool intersectsFluidMesh(glm::vec2 ndc_position, glm::vec2* st) const;
 private:
 	FluidMesh _fluid_mesh;
+	SphericalController _controller;
 };
 
 #endif

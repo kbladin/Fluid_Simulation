@@ -25,6 +25,7 @@ private:
 	FluidDomain* _fluid_domain;
 	FluidRendererGL* _renderer;
 	double _mouse_x, _mouse_y;
+	float _emitter_radius;
 };
 
 #endif

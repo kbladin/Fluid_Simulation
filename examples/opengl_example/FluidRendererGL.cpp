@@ -18,15 +18,17 @@ FluidMesh::~FluidMesh()
 
 }
 
-void FluidMesh::updateParticleSet(const MarkerParticleSet& particle_set)
+void FluidMesh::updateState(const FluidDomain& fluid_domain)
 {
 	std::vector<glm::vec3> points;
-	points.reserve(particle_set.size());
-	for (auto it = particle_set.begin(); it != particle_set.end(); it++)
+	points.reserve(fluid_domain.markerParticleSet().size());
+	for (auto it = fluid_domain.markerParticleSet().begin();
+		it != fluid_domain.markerParticleSet().end(); it++)
 	{
 		points.push_back(glm::vec3(it->posX(), it->posY(),0));
 	}
 	_mesh.update(points);
+	_color_blend = pow(fluid_domain.picRatio(), 0.2);
 }
 
 void FluidMesh::execute()
@@ -41,6 +43,7 @@ void FluidMesh::execute()
 		1,
 		GL_FALSE,
 		&relativeTransform()[0][0]);
+	glUniform1f(glGetUniformLocation(program_ID, "color_blend"), _color_blend);
     
 	glEnable(GL_BLEND);
 	glDisable(GL_DEPTH_TEST);
@@ -70,7 +73,8 @@ bool FluidMesh::intersects(glm::vec3 origin, glm::vec3 direction, glm::vec2* st)
 
 FluidRendererGL::FluidRendererGL(int size_x, int size_y, MyFloat length_x, MyFloat length_y) :
 	SimpleGraphicsEngine(size_x, size_y),
-	_fluid_mesh(length_x, length_y)
+	_fluid_mesh(length_x, length_y),
+	_controller(&perspective_camera)
 {
 	ShaderManager::instance()->loadShader(
 		"render_cpu_particles",
@@ -88,17 +92,21 @@ FluidRendererGL::FluidRendererGL(int size_x, int size_y, MyFloat length_x, MyFlo
 
     //_fluid_mesh.transform_matrix *= glm::scale(2.0f * glm::vec3(1/length_x, 1/length_y, 1));
     _fluid_mesh.setTransform(glm::translate(glm::vec3(-length_x/2, -length_y/2, 0)));
-    
-    perspective_camera.setTransform(glm::inverse(glm::lookAt(glm::vec3(0.0f,0.0f,1.0f), glm::vec3(0.0f,0.0f,0.0f), glm::vec3(0.0f,1.0f,0.0f))));
 }
 
 FluidRendererGL::~FluidRendererGL()
 {
 }
 
-void FluidRendererGL::renderParticles(const MarkerParticleSet& particle_set)
+Controller* FluidRendererGL::controller()
 {
-	_fluid_mesh.updateParticleSet(particle_set);
+	return &_controller;
+}
+
+void FluidRendererGL::renderFluid(const FluidDomain& fluid_domain)
+{
+	_controller.step(0);
+	_fluid_mesh.updateState(fluid_domain);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable( GL_BLEND );
 	render();

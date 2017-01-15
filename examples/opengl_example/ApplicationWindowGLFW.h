@@ -2,6 +2,7 @@
 #define _APPLICATION_WINDOW_GLFW_H
 
 #include "FluidInteractionHandler.h"
+#include "SGE/Controller.h"
 
 #include <iostream>
 #include <functional>
@@ -18,6 +19,7 @@ public:
 
   void run(std::function<void(void)> f);
   void setInteractionHandler(FluidInteractionHandler* interaction_handler);
+  void setController(Controller* controller);
 private:
   // Functions
   bool initOpenGLContext(int width, int height);
@@ -48,6 +50,7 @@ private:
   // Data
   GLFWwindow* _window;
   static FluidInteractionHandler* _interaction_handler;
+  static Controller* _controller;
 
   float _delay_counter;
   int   _frame_counter;

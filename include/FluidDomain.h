@@ -55,6 +55,9 @@ public:
 	MacGrid& macGrid();
 	LevelSet& levelSet();
 	MarkerParticleSet& markerParticleSet();
+	const MacGrid& macGrid() const;
+	const LevelSet& levelSet() const;
+	const MarkerParticleSet& markerParticleSet() const;
 	const MyFloat density() const;
 	const MyFloat picRatio() const;
 
