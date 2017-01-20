@@ -33,7 +33,7 @@ void FluidMesh::updateState(const FluidDomain& fluid_domain)
 
 void FluidMesh::execute()
 {
-    GLuint program_ID = ShaderManager::instance()->getShader("render_cpu_particles");
+    GLuint program_ID = ShaderManager::instance().getShader("render_cpu_particles");
 	
 	glUseProgram(program_ID);
 
@@ -58,10 +58,10 @@ bool FluidMesh::intersects(glm::vec3 origin, glm::vec3 direction, glm::vec2* st)
 		glm::inverse(absoluteTransform()) * glm::vec4(origin, 1));
 	glm::vec3 direction_model_space = glm::vec3(
 		glm::inverse(absoluteTransform()) * glm::vec4(direction, 0));
-	float t;
-	if (_aabb.intersects(origin_model_space, direction_model_space, &t))
+    auto intersection = _aabb.intersects(origin_model_space, direction_model_space);
+	if (intersection.first)
 	{
-        glm::vec3 intersection_point = origin_model_space + t * direction_model_space;
+        glm::vec3 intersection_point = origin_model_space + intersection.second * direction_model_space;
         *st = glm::vec2(intersection_point);
 		return true;
 	}
@@ -74,9 +74,9 @@ bool FluidMesh::intersects(glm::vec3 origin, glm::vec3 direction, glm::vec2* st)
 FluidRendererGL::FluidRendererGL(int size_x, int size_y, MyFloat length_x, MyFloat length_y) :
 	SimpleGraphicsEngine(size_x, size_y),
 	_fluid_mesh(length_x, length_y),
-	_controller(&perspective_camera)
+	_controller(perspective_camera)
 {
-	ShaderManager::instance()->loadShader(
+	ShaderManager::instance().loadShader(
 		"render_cpu_particles",
 		(std::string(PROJECT_SOURCE_DIR) + "/shaders/render_cpu_particles.vert").c_str(),
 		nullptr,
@@ -84,10 +84,10 @@ FluidRendererGL::FluidRendererGL(int size_x, int size_y, MyFloat length_x, MyFlo
 		nullptr,
 		(std::string(PROJECT_SOURCE_DIR) + "/shaders/render_cpu_particles.frag").c_str());
 
-	perspective_camera.addToShader(ShaderManager::instance()->getShader("render_cpu_particles"));
+	perspective_camera.addToShader(ShaderManager::instance().getShader("render_cpu_particles"));
 	//viewspace_ortho_camera.addToShader(ShaderManager::instance()->getShader("render_cpu_particles"));
 
-	scene.addChild(&_fluid_mesh);
+	scene.addChild(_fluid_mesh);
 	//view_space.addChild(&_fluid_mesh);
 
     //_fluid_mesh.transform_matrix *= glm::scale(2.0f * glm::vec3(1/length_x, 1/length_y, 1));
@@ -114,7 +114,6 @@ void FluidRendererGL::renderFluid(const FluidDomain& fluid_domain)
 
 bool FluidRendererGL::intersectsFluidMesh(glm::vec2 ndc_position, glm::vec2* st) const
 {
-	glm::vec3 origin, direction;
-	perspective_camera.unproject(ndc_position, &origin, &direction);
-	return _fluid_mesh.intersects(origin, direction, st);
+	auto origin_and_direction = perspective_camera.unproject(ndc_position);
+	return _fluid_mesh.intersects(origin_and_direction.first, origin_and_direction.second, st);
 }
