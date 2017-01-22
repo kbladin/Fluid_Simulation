@@ -33,23 +33,25 @@ void FluidMesh::updateState(const FluidDomain& fluid_domain)
 
 void FluidMesh::execute()
 {
-    GLuint program_ID = ShaderManager::instance().getShader("render_cpu_particles");
+    ShaderProgram* program = ShaderManager::instance().getShader("render_cpu_particles");
 	
-	glUseProgram(program_ID);
-
+    program->bind();
+    
 	// Input to the shader
 	glUniformMatrix4fv(
-		glGetUniformLocation(program_ID, "M"),
+		glGetUniformLocation(program->id(), "M"),
 		1,
 		GL_FALSE,
 		&relativeTransform()[0][0]);
-	glUniform1f(glGetUniformLocation(program_ID, "color_blend"), _color_blend);
+	glUniform1f(glGetUniformLocation(program->id(), "color_blend"), _color_blend);
     
 	glEnable(GL_BLEND);
 	glDisable(GL_DEPTH_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
 	_mesh.render();
+    
+    program->unbind();
 }
 
 bool FluidMesh::intersects(glm::vec3 origin, glm::vec3 direction, glm::vec2* st) const
@@ -76,7 +78,7 @@ FluidRendererGL::FluidRendererGL(int size_x, int size_y, MyFloat length_x, MyFlo
 	_fluid_mesh(length_x, length_y),
 	_controller(perspective_camera)
 {
-	ShaderManager::instance().loadShader(
+	ShaderManager::instance().loadAndAddShader(
 		"render_cpu_particles",
 		(std::string(PROJECT_SOURCE_DIR) + "/shaders/render_cpu_particles.vert").c_str(),
 		nullptr,
@@ -84,7 +86,7 @@ FluidRendererGL::FluidRendererGL(int size_x, int size_y, MyFloat length_x, MyFlo
 		nullptr,
 		(std::string(PROJECT_SOURCE_DIR) + "/shaders/render_cpu_particles.frag").c_str());
 
-	perspective_camera.addToShader(ShaderManager::instance().getShader("render_cpu_particles"));
+	perspective_camera.addToShader(ShaderManager::instance().getShader("render_cpu_particles")->id());
 	//viewspace_ortho_camera.addToShader(ShaderManager::instance()->getShader("render_cpu_particles"));
 
 	scene.addChild(_fluid_mesh);
