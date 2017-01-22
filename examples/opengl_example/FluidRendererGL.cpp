@@ -98,14 +98,13 @@ FluidRendererGL::~FluidRendererGL()
 {
 }
 
-Controller* FluidRendererGL::controller()
+Controller& FluidRendererGL::controller()
 {
-	return &_controller;
+	return _controller;
 }
 
 void FluidRendererGL::renderFluid(const FluidDomain& fluid_domain)
 {
-	_controller.step(0);
 	_fluid_mesh.updateState(fluid_domain);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable( GL_BLEND );

@@ -8,7 +8,9 @@
 #include <time.h>
 
 #include "FluidRendererGL.h"
-#include "ApplicationWindowGLFW.h"
+#include "FluidInteractionHandler.h"
+
+#include "sge/window/application_window_glfw.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -34,11 +36,11 @@ int main(int argc, char const *argv[])
 	// Setup
     fluid_domain.addFluidSource(FluidSource( { 4.0 / GRID_X_SIZE, 0.1, 3.0 / GRID_Y_SIZE, 1 - 4.0 / GRID_Y_SIZE }, DELTA_X, DELTA_Y, 0.0, 0.0, 0.0, 1));
     
-	ApplicationWindowGLFW window(512 * WORLD_X_SIZE, 512 * WORLD_Y_SIZE);
+    sge::window::ApplicationWindowGLFW window(512 * WORLD_X_SIZE, 512 * WORLD_Y_SIZE);
 	FluidRendererGL renderer(512 * WORLD_X_SIZE, 512 * WORLD_Y_SIZE, WORLD_X_SIZE, WORLD_Y_SIZE);
-    FluidInteractionHandler interaction_handler(&fluid_domain, &renderer);
-	window.setInteractionHandler(&interaction_handler);
-	window.setController(renderer.controller());
+    FluidInteractionHandler interaction_handler(fluid_domain, renderer);
+	window.addController(interaction_handler);
+	window.addController(renderer.controller());
 	
 
     // Prepare simulation

@@ -7,24 +7,18 @@
 #include <FluidDomain.h>
 #include "FluidRendererGL.h"
 
-class FluidInteractionHandler
+class FluidInteractionHandler : public Controller
 {
 public:
-	FluidInteractionHandler(FluidDomain* fluid_domain, FluidRendererGL* renderer);
+	FluidInteractionHandler(FluidDomain& fluid_domain, FluidRendererGL& renderer);
 	~FluidInteractionHandler();
-
-	// NDC coordinates
-	void mousePosCallback(double x, double y);
-	void mouseButtonCallback(int button, int action, int mods);
-	void mouseScrollCallback(double dx, double dy);
-	void keyCallback(int key, int scancode, int action, int mods);
-  	void windowSizeCallback(int width, int height);
 	
+	virtual void keyCallback(Key key, KeyAction action) override;
+	virtual void step(float dt) override;	
 private:
 	// Data
-	FluidDomain* _fluid_domain;
-	FluidRendererGL* _renderer;
-	double _mouse_x, _mouse_y;
+	FluidDomain& _fluid_domain;
+	FluidRendererGL& _renderer;
 	float _emitter_radius;
 };
 

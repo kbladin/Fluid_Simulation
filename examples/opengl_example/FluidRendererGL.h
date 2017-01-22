@@ -1,15 +1,17 @@
 #ifndef FLUID_RENDERER_GL_H
 #define FLUID_RENDERER_GL_H
 
-#include <SGE/SimpleGraphicsEngine.h>
-#include <SGE/ShaderManager.h>
-#include <SGE/Mesh.h>
-#include <SGE/BoundingBox.h>
-#include <SGE/Controller.h>
+#include <sge/core/simple_graphics_engine.h>
+#include <sge/core/shader_manager.h>
+#include <sge/core/mesh.h>
+#include <sge/core/bounding_box.h>
+#include <sge/core/controller.h>
 
 #include <FluidDomain.h>
 
 #include <memory>
+
+using namespace sge::core;
 
 class FluidMesh : public Object3D
 {
@@ -36,7 +38,7 @@ public:
 		int size_x, int size_y, MyFloat length_x, MyFloat length_y);
 	~FluidRendererGL();
 
-	Controller* controller();
+	Controller& controller();
 
 	void renderFluid(const FluidDomain& fluid_domain);
 	bool intersectsFluidMesh(glm::vec2 ndc_position, glm::vec2* st) const;
