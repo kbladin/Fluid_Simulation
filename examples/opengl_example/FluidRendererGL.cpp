@@ -10,7 +10,9 @@
 FluidMesh::FluidMesh(MyFloat length_x, MyFloat length_y) :
 	_aabb(glm::vec3(0, 0, 0), glm::vec3(length_x, length_y, 0))
 {
-
+  auto positions = new std::vector<glm::vec3>;
+  positions->resize(1);
+  _mesh = std::make_shared<NewCPUPointCloud>(positions);
 }
 
 FluidMesh::~FluidMesh()
@@ -27,7 +29,7 @@ void FluidMesh::updateState(const FluidDomain& fluid_domain)
 	{
 		points.push_back(glm::vec3(it->posX(), it->posY(),0));
 	}
-	_mesh.update(points);
+	_mesh->update(points);
 	_color_blend = pow(fluid_domain.picRatio(), 0.2);
 }
 
@@ -49,7 +51,7 @@ void FluidMesh::execute()
 	glDisable(GL_DEPTH_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
-	_mesh.render();
+	_mesh->render();
     
     program->unbind();
 }

@@ -6,6 +6,7 @@
 #include <sge/core/mesh.h>
 #include <sge/core/bounding_box.h>
 #include <sge/core/controller.h>
+#include <sge/core/new_mesh.h>
 
 #include <FluidDomain.h>
 
@@ -24,7 +25,7 @@ public:
 	
 	bool intersects(glm::vec3 origin, glm::vec3 direction, glm::vec2* st) const;
 private:
-	CPUPointCloudMesh _mesh;
+	std::shared_ptr<NewCPUPointCloud> _mesh;
 	BoundingBox _aabb;
 	float _color_blend;
 };
