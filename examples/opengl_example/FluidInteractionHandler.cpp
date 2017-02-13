@@ -15,6 +15,11 @@ FluidInteractionHandler::~FluidInteractionHandler()
 
 }
 
+void FluidInteractionHandler::windowSizeCallback(int width, int height)
+{
+  _renderer.camera().setAspectRatio( static_cast<float>(width) / height);
+}
+
 void FluidInteractionHandler::step(float dt)
 {
     // For now just create on every update

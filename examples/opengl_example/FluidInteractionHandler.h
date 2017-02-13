@@ -13,6 +13,7 @@ public:
 	FluidInteractionHandler(FluidDomain& fluid_domain, FluidRendererGL& renderer);
 	~FluidInteractionHandler();
 	
+  virtual void windowSizeCallback(int width, int height) override;
 	virtual void keyCallback(Key key, KeyAction action) override;
 	virtual void step(float dt) override;	
 private:

@@ -6,7 +6,7 @@
 #include <sge/core/mesh.h>
 #include <sge/core/bounding_box.h>
 #include <sge/core/controller.h>
-#include <sge/core/new_mesh.h>
+#include <sge/core/mesh.h>
 
 #include <FluidDomain.h>
 
@@ -14,18 +14,19 @@
 
 using namespace sge::core;
 
-class FluidMesh : public Object3D
+class RenderableFluidMesh : public RenderableForward
 {
 public:
-	FluidMesh(MyFloat length_x, MyFloat length_y);
-	~FluidMesh();
+	RenderableFluidMesh(MyFloat length_x, MyFloat length_y);
+	~RenderableFluidMesh();
 	
 	void updateState(const FluidDomain& fluid_domain);
-	virtual void execute();
+	virtual void render(const UsefulRenderData& render_data) override;
 	
 	bool intersects(glm::vec3 origin, glm::vec3 direction, glm::vec2* st) const;
 private:
-	std::shared_ptr<NewCPUPointCloud> _mesh;
+  std::shared_ptr<ShaderProgram> _program;
+	std::shared_ptr<CPUPointCloud> _mesh;
 	BoundingBox _aabb;
 	float _color_blend;
 };
@@ -41,10 +42,11 @@ public:
 
 	Controller& controller();
 
+  void update(double dt);
 	void renderFluid(const FluidDomain& fluid_domain);
 	bool intersectsFluidMesh(glm::vec2 ndc_position, glm::vec2* st) const;
 private:
-	FluidMesh _fluid_mesh;
+	RenderableFluidMesh _fluid_mesh;
 	SphericalController _controller;
 };
 

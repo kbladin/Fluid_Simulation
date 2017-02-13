@@ -7,20 +7,28 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
 
-FluidMesh::FluidMesh(MyFloat length_x, MyFloat length_y) :
+RenderableFluidMesh::RenderableFluidMesh(MyFloat length_x, MyFloat length_y) :
 	_aabb(glm::vec3(0, 0, 0), glm::vec3(length_x, length_y, 0))
 {
+	_program = std::make_shared<ShaderProgram>(
+		"render_cpu_particles",
+		(std::string(PROJECT_SOURCE_DIR) + "/shaders/render_cpu_particles.vert").c_str(),
+		nullptr,
+		nullptr,
+		nullptr,
+		(std::string(PROJECT_SOURCE_DIR) + "/shaders/render_cpu_particles.frag").c_str());
+
   auto positions = new std::vector<glm::vec3>;
   positions->resize(1);
-  _mesh = std::make_shared<NewCPUPointCloud>(positions);
+  _mesh = std::make_shared<CPUPointCloud>(positions);
 }
 
-FluidMesh::~FluidMesh()
+RenderableFluidMesh::~RenderableFluidMesh()
 {
 
 }
 
-void FluidMesh::updateState(const FluidDomain& fluid_domain)
+void RenderableFluidMesh::updateState(const FluidDomain& fluid_domain)
 {
 	std::vector<glm::vec3> points;
 	points.reserve(fluid_domain.markerParticleSet().size());
@@ -33,30 +41,37 @@ void FluidMesh::updateState(const FluidDomain& fluid_domain)
 	_color_blend = pow(fluid_domain.picRatio(), 0.2);
 }
 
-void FluidMesh::execute()
+void RenderableFluidMesh::render(const UsefulRenderData& render_data)
 {
-    ShaderProgram* program = ShaderManager::instance().getShader("render_cpu_particles");
-	
-    program->bind();
+    _program->pushUsage();
     
 	// Input to the shader
 	glUniformMatrix4fv(
-		glGetUniformLocation(program->id(), "M"),
+		glGetUniformLocation(_program->id(), "M"),
 		1,
 		GL_FALSE,
-		&relativeTransform()[0][0]);
-	glUniform1f(glGetUniformLocation(program->id(), "color_blend"), _color_blend);
+		&absoluteTransform()[0][0]);
+	glUniformMatrix4fv(
+		glGetUniformLocation(_program->id(), "V"),
+		1,
+		GL_FALSE,
+		&render_data.camera.viewTransform()[0][0]);
+	glUniformMatrix4fv(
+		glGetUniformLocation(_program->id(), "P"),
+		1,
+		GL_FALSE,
+		&render_data.camera.projectionTransform()[0][0]);
+	glUniform1f(glGetUniformLocation(_program->id(), "color_blend"), _color_blend);
     
 	glEnable(GL_BLEND);
 	glDisable(GL_DEPTH_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
 	_mesh->render();
-    
-    program->unbind();
+  _program->popUsage();
 }
 
-bool FluidMesh::intersects(glm::vec3 origin, glm::vec3 direction, glm::vec2* st) const
+bool RenderableFluidMesh::intersects(glm::vec3 origin, glm::vec3 direction, glm::vec2* st) const
 {
 	glm::vec3 origin_model_space = glm::vec3(
 		glm::inverse(absoluteTransform()) * glm::vec4(origin, 1));
@@ -76,21 +91,10 @@ bool FluidMesh::intersects(glm::vec3 origin, glm::vec3 direction, glm::vec2* st)
 }
 
 FluidRendererGL::FluidRendererGL(int size_x, int size_y, MyFloat length_x, MyFloat length_y) :
-	SimpleGraphicsEngine(size_x, size_y),
+	SimpleGraphicsEngine(),
 	_fluid_mesh(length_x, length_y),
 	_controller(perspective_camera)
 {
-	ShaderManager::instance().loadAndAddShader(
-		"render_cpu_particles",
-		(std::string(PROJECT_SOURCE_DIR) + "/shaders/render_cpu_particles.vert").c_str(),
-		nullptr,
-		nullptr,
-		nullptr,
-		(std::string(PROJECT_SOURCE_DIR) + "/shaders/render_cpu_particles.frag").c_str());
-
-	perspective_camera.addToShader(ShaderManager::instance().getShader("render_cpu_particles")->id());
-	//viewspace_ortho_camera.addToShader(ShaderManager::instance()->getShader("render_cpu_particles"));
-
 	scene.addChild(_fluid_mesh);
 	//view_space.addChild(&_fluid_mesh);
 
@@ -107,12 +111,20 @@ Controller& FluidRendererGL::controller()
 	return _controller;
 }
 
+void FluidRendererGL::update(double dt)
+{
+  SimpleGraphicsEngine::update(dt);
+}
+
 void FluidRendererGL::renderFluid(const FluidDomain& fluid_domain)
 {
 	_fluid_mesh.updateState(fluid_domain);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable( GL_BLEND );
-	render();
+  
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  
+	_fluid_mesh.render({camera()});
 }
 
 bool FluidRendererGL::intersectsFluidMesh(glm::vec2 ndc_position, glm::vec2* st) const

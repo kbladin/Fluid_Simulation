@@ -36,9 +36,11 @@ int main(int argc, char const *argv[])
 	// Setup
     fluid_domain.addFluidSource(FluidSource( { 4.0 / GRID_X_SIZE, 0.1, 3.0 / GRID_Y_SIZE, 1 - 4.0 / GRID_Y_SIZE }, DELTA_X, DELTA_Y, 0.0, 0.0, 0.0, 1));
     
-    sge::window::ApplicationWindowGLFW window(512 * WORLD_X_SIZE, 512 * WORLD_Y_SIZE);
+    sge::window::ApplicationWindowGLFW window("PIC / FLIP Fluid Simulation",512 * WORLD_X_SIZE, 512 * WORLD_Y_SIZE);
 	FluidRendererGL renderer(512 * WORLD_X_SIZE, 512 * WORLD_Y_SIZE, WORLD_X_SIZE, WORLD_Y_SIZE);
-    FluidInteractionHandler interaction_handler(fluid_domain, renderer);
+  
+  FluidInteractionHandler interaction_handler(fluid_domain, renderer);
+  
 	window.addController(interaction_handler);
 	window.addController(renderer.controller());
 	
@@ -46,7 +48,7 @@ int main(int argc, char const *argv[])
     // Prepare simulation
 	MyFloat seconds_per_frame = 1 / 60.0;
 	
-	std::function<void(void)> loop = [&](){
+	std::function<void(double)> loop = [&](double dt_frame){
 		MyFloat dt;
 		// Simulate
 		for (MyFloat frame_time = 0; frame_time < seconds_per_frame; frame_time += dt)
@@ -62,6 +64,8 @@ int main(int argc, char const *argv[])
 			//fluid_solver.stepSemiLagrangian(fluid_domain, dt);
 			fluid_solver.stepPICFLIP(fluid_domain, dt);
 		}
+    
+    renderer.update(dt_frame);
 		// Render
 		renderer.renderFluid(fluid_domain);
         return;
