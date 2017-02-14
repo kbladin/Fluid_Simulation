@@ -7,8 +7,10 @@
 #include <sge/core/bounding_box.h>
 #include <sge/core/controller.h>
 #include <sge/core/mesh.h>
+#include <sge/core/simple_forward_3d_renderer.h>
 
 #include <FluidDomain.h>
+#include <FluidSolver.h>
 
 #include <memory>
 
@@ -37,17 +39,23 @@ class FluidRendererGL : public SimpleGraphicsEngine
 {
 public:
 	FluidRendererGL(
-		int size_x, int size_y, MyFloat length_x, MyFloat length_y);
+		int size_x, int size_y, MyFloat length_x, MyFloat length_y,
+    int wondow_width, int window_height);
 	~FluidRendererGL();
 
-	Controller& controller();
+	FluidDomain& fluidDomain();
+  SimpleForward3DRenderer& renderer() { return _renderer; };
 
   void update(double dt);
-	void renderFluid(const FluidDomain& fluid_domain);
 	bool intersectsFluidMesh(glm::vec2 ndc_position, glm::vec2* st) const;
 private:
+  SimpleForward3DRenderer _renderer;
+
+  FluidDomain _fluid_domain;
+  FluidSolverMemoryPool _mem_pool;
+  FluidSolver _fluid_solver;
+
 	RenderableFluidMesh _fluid_mesh;
-	SphericalController _controller;
 };
 
 #endif

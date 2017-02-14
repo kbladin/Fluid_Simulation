@@ -2,9 +2,7 @@
 
 #include <iostream>
 
-FluidInteractionHandler::FluidInteractionHandler(
-	FluidDomain& fluid_domain, FluidRendererGL& renderer) :
-	_fluid_domain(fluid_domain),
+FluidInteractionHandler::FluidInteractionHandler(FluidRendererGL& renderer) :
 	_renderer(renderer)
 {
 	_emitter_radius = 0.05;
@@ -27,11 +25,11 @@ void FluidInteractionHandler::step(float dt)
     if (_mouse_buttons_pressed.count(MouseButton::MOUSE_BUTTON_1) &&
     	_renderer.intersectsFluidMesh(glm::vec2(_mouse_x, _mouse_y), &st))
 	{
-		_fluid_domain.addFluidSource(FluidSource(
+		_renderer.fluidDomain().addFluidSource(FluidSource(
 		{ st.x - _emitter_radius, st.x + _emitter_radius,
 			st.y - _emitter_radius, st.y + _emitter_radius },
-		_fluid_domain.deltaX(),
-		_fluid_domain.deltaY(),
+		_renderer.fluidDomain().deltaX(),
+		_renderer.fluidDomain().deltaY(),
 		0.0, 0.0, 0.0, 1));
 	}
 
@@ -51,18 +49,18 @@ void FluidInteractionHandler::keyCallback(Key key, KeyAction action)
 		{
 			case Key::KEY_R :
 			{
-				_fluid_domain.clearFluidSources();
-				_fluid_domain.resetParticleSet();
+				_renderer.fluidDomain().clearFluidSources();
+				_renderer.fluidDomain().resetParticleSet();
                 break;
 			}
 			case Key::KEY_O :
 			{
-				_fluid_domain.setPicRatio(_fluid_domain.picRatio() * 0.8);
+				_renderer.fluidDomain().setPicRatio(_renderer.fluidDomain().picRatio() * 0.8);
                 break;
 			}
 			case Key::KEY_P :
 			{
-				_fluid_domain.setPicRatio(_fluid_domain.picRatio() * 1.2);
+				_renderer.fluidDomain().setPicRatio(_renderer.fluidDomain().picRatio() * 1.2);
                 break;
 			}
 			case Key::KEY_K :

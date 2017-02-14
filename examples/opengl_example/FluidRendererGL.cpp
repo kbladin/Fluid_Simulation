@@ -43,8 +43,7 @@ void RenderableFluidMesh::updateState(const FluidDomain& fluid_domain)
 
 void RenderableFluidMesh::render(const UsefulRenderData& render_data)
 {
-    _program->pushUsage();
-    
+  _program->pushUsage();
 	// Input to the shader
 	glUniformMatrix4fv(
 		glGetUniformLocation(_program->id(), "M"),
@@ -64,9 +63,10 @@ void RenderableFluidMesh::render(const UsefulRenderData& render_data)
 	glUniform1f(glGetUniformLocation(_program->id(), "color_blend"), _color_blend);
     
 	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDisable(GL_DEPTH_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-
+  
 	_mesh->render();
   _program->popUsage();
 }
@@ -90,11 +90,20 @@ bool RenderableFluidMesh::intersects(glm::vec3 origin, glm::vec3 direction, glm:
 	}
 }
 
-FluidRendererGL::FluidRendererGL(int size_x, int size_y, MyFloat length_x, MyFloat length_y) :
+FluidRendererGL::FluidRendererGL(int size_x, int size_y, MyFloat length_x, MyFloat length_y, int window_width, int window_height) :
 	SimpleGraphicsEngine(),
-	_fluid_mesh(length_x, length_y),
-	_controller(perspective_camera)
+  _renderer(camera(), window_width, window_height),
+  _fluid_domain(size_x, size_y, length_x, length_y, 0.005, 0.02),
+  _mem_pool(_fluid_domain),
+	_fluid_solver(_mem_pool),
+  _fluid_mesh(length_x, length_y)
 {
+// Initialize
+	
+	// Setup
+    //_fluid_domain.addFluidSource(FluidSource( { 4.0 / GRID_X_SIZE, 0.1, 3.0 / GRID_Y_SIZE, 1 - 4.0 / GRID_Y_SIZE }, DELTA_X, DELTA_Y, 0.0, 0.0, 0.0, 1));
+  
+
 	scene.addChild(_fluid_mesh);
 	//view_space.addChild(&_fluid_mesh);
 
@@ -106,25 +115,32 @@ FluidRendererGL::~FluidRendererGL()
 {
 }
 
-Controller& FluidRendererGL::controller()
+FluidDomain& FluidRendererGL::fluidDomain()
 {
-	return _controller;
+	return _fluid_domain;
 }
 
-void FluidRendererGL::update(double dt)
+void FluidRendererGL::update(double dt_frame)
 {
-  SimpleGraphicsEngine::update(dt);
-}
+  SimpleGraphicsEngine::update(dt_frame);
+  
+  MyFloat seconds_per_frame = 1 / 60.0;
+  MyFloat dt;
+  // Simulate
+  for (MyFloat frame_time = 0; frame_time < seconds_per_frame; frame_time += dt)
+  {
+    // Calculate dt (for now just set it)
+    dt = 0.005;
+    dt = CLAMP(dt, 0, seconds_per_frame - frame_time);
+    // Update fluid domain (creates new fluid from sources)
+    _fluid_domain.update(dt);
 
-void FluidRendererGL::renderFluid(const FluidDomain& fluid_domain)
-{
-	_fluid_mesh.updateState(fluid_domain);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable( GL_BLEND );
-  
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  
-	_fluid_mesh.render({camera()});
+    // Solve
+    //fluid_solver.stepSemiLagrangian(fluid_domain, dt);
+    _fluid_solver.stepPICFLIP(_fluid_domain, dt);
+  }
+  _fluid_mesh.updateState(_fluid_domain);
+  _renderer.render(scene);
 }
 
 bool FluidRendererGL::intersectsFluidMesh(glm::vec2 ndc_position, glm::vec2* st) const
