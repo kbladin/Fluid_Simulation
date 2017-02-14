@@ -21,9 +21,7 @@ Examples:
 ## Not Yet Implemented
 * Adaptive time steps
 * Vorticity confinement
-* A reasonable volume preservation method
 * Make sure marker particles are outside of obstacles
 * Other interpolation alternatives (quadratic, cubic, Catmull Rom)
 * Other air/fluid separation techniques (for example level set)
 * 3D simulation
-* Sophisticated rendering
