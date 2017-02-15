@@ -44,8 +44,10 @@ if(BUILD_OPENGL_EXAMPLE)
 	find_package(GLFW3 REQUIRED)
   	include_directories(${GLFW_INCLUDE_DIRS})
 
-	add_subdirectory(${PROJECT_SOURCE_DIR}/ext/Simple_Graphics_Engine)
-	include_directories(${SGE_INCLUDE_DIRS})
+	add_subdirectory(${PROJECT_SOURCE_DIR}/ext/ElkEngine)
+	include_directories(${ELK_INCLUDE_DIRS})
+	include_directories(${GLEW_INCLUDE_DIR})
+	include_directories(${GLM_INCLUDE_DIR})
 
 	file(GLOB ${PROJECCT_NAME}_openGL_example_SOURCES
 		${PROJECT_SOURCE_DIR}/examples/opengl_example/*.cpp)
@@ -57,7 +59,7 @@ if(BUILD_OPENGL_EXAMPLE)
 		${${PROJECCT_NAME}_openGL_example_HEADERS})
 	target_link_libraries(${PROJECT_NAME}_openGL_example
 		${PROJECT_NAME}_lib
-		SGE
+		${ELK_LIBRARIES}
 		${GLFW_LIBRARIES}
 		)
 	set_target_properties(${PROJECT_NAME}_openGL_example

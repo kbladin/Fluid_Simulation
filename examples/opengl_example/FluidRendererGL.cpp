@@ -91,7 +91,7 @@ bool RenderableFluidMesh::intersects(glm::vec3 origin, glm::vec3 direction, glm:
 }
 
 FluidRendererGL::FluidRendererGL(int size_x, int size_y, MyFloat length_x, MyFloat length_y, int window_width, int window_height) :
-	SimpleGraphicsEngine(),
+	ElkEngine(),
   _renderer(camera(), window_width, window_height),
   _fluid_domain(size_x, size_y, length_x, length_y, 0.005, 0.02),
   _mem_pool(_fluid_domain),
@@ -122,7 +122,7 @@ FluidDomain& FluidRendererGL::fluidDomain()
 
 void FluidRendererGL::update(double dt_frame)
 {
-  SimpleGraphicsEngine::update(dt_frame);
+  ElkEngine::update(dt_frame);
   
   MyFloat seconds_per_frame = 1 / 60.0;
   MyFloat dt;

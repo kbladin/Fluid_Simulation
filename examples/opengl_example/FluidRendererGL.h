@@ -1,20 +1,19 @@
 #ifndef FLUID_RENDERER_GL_H
 #define FLUID_RENDERER_GL_H
 
-#include <sge/core/simple_graphics_engine.h>
-#include <sge/core/shader_manager.h>
-#include <sge/core/mesh.h>
-#include <sge/core/bounding_box.h>
-#include <sge/core/controller.h>
-#include <sge/core/mesh.h>
-#include <sge/core/simple_forward_3d_renderer.h>
+#include <elk/core/elk_engine.h>
+#include <elk/core/mesh.h>
+#include <elk/core/bounding_box.h>
+#include <elk/core/controller.h>
+#include <elk/core/mesh.h>
+#include <elk/core/simple_forward_3d_renderer.h>
 
 #include <FluidDomain.h>
 #include <FluidSolver.h>
 
 #include <memory>
 
-using namespace sge::core;
+using namespace elk::core;
 
 class RenderableFluidMesh : public RenderableForward
 {
@@ -35,7 +34,7 @@ private:
 
 // This class extends SimpleGraphicsEngine,
 // Before initializing this object, an OpenGL context must be created
-class FluidRendererGL : public SimpleGraphicsEngine
+class FluidRendererGL : public ElkEngine
 {
 public:
 	FluidRendererGL(

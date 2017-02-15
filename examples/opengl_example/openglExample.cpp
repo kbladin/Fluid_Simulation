@@ -10,7 +10,7 @@
 #include "FluidRendererGL.h"
 #include "FluidInteractionHandler.h"
 
-#include "sge/window/application_window_glfw.h"
+#include "elk/window/application_window_glfw.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -28,7 +28,7 @@ int main(int argc, char const *argv[])
 {
   int window_width = 512 * WORLD_X_SIZE;
   int window_height = 512 * WORLD_Y_SIZE;
-  sge::window::ApplicationWindowGLFW window("PIC / FLIP Fluid Simulation",window_width, window_height);
+  elk::window::ApplicationWindowGLFW window("PIC / FLIP Fluid Simulation",window_width, window_height);
 	FluidRendererGL renderer(GRID_X_SIZE, GRID_Y_SIZE, WORLD_X_SIZE, WORLD_Y_SIZE, window_width, window_height);
   
   FluidInteractionHandler interaction_handler(renderer);
