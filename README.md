@@ -18,6 +18,10 @@ Examples:
 
 ![](images/PIC.gif "PIC simulation") ![](images/FLIP.gif "FLIP simulation") ![](images/PICFLIP98.gif "2% PIC 98% FLIP simulation") ![](images/squirt1.gif "Volume preservation") ![](images/squirt2.gif "Volume preservation and high viscisity") ![](images/squirt4_k0.gif "No volume preservation. Smaller delta time")
 
+Youtube video of real time simulation:
+
+[![Real time fluid simulation](https://img.youtube.com/vi/gkGh4Xw5LDQ/0.jpg)](https://www.youtube.com/watch?v=gkGh4Xw5LDQ)
+
 ## Not Yet Implemented
 * Adaptive time steps
 * Vorticity confinement
